@@ -92,8 +92,8 @@ jobs:
   test-installer-script-zip:
     strategy:
       matrix:
-        version: [v23.11.01, v24.01.01] 
-        # version: [v23.11.01, ''] 
+        # version: [v23.11.01, v24.01.01] 
+        version: [v23.11.01, ''] 
     runs-on: windows-latest
     needs: build
 
