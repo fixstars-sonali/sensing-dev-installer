@@ -144,7 +144,7 @@ jobs:
 
           $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
           Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-          if(${expected_install_path} == ${GST_PLUGIN_PATH}){
+          if(${expected_install_path} -eq ${GST_PLUGIN_PATH}){
             $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
           }
           else {
@@ -153,7 +153,7 @@ jobs:
 
           $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
           Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-          if(${expected_install_path} == ${SENSING_DEV_ROOT}){
+          if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
             $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
           }
           else {
