@@ -135,7 +135,7 @@ jobs:
         working-directory: build
         run: |
           Write-Host "USERNAME = $env:USERNAME"
-          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ matrix.version }} -user "$env:USERNAME"          
+          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} -user "$env:USERNAME"          
 
       - name: Test Env instaltion ZIP 
         working-directory: build          
