@@ -79,81 +79,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-installer-script-zip:
-    strategy:
-      matrix:
-        version: [v23.11.01, ''] 
-    runs-on: windows-latest
-    needs: release
-
-    env:
-      INSTALL_PATH: "$env:LOCALAPPDATA"
-      SDK_NAME : "sensing-dev"
-      VERSION : ${{ matrix.version == '' && github.ref_name || matrix.version}}
-
-    steps:     
-      - name: Create and enter build directory
-        run: |
-          mkdir build
-          cd build
-
-      - name: Download installer
-        working-directory: build
-        run: |
-          $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-          Invoke-WebRequest $url -OutFile .\installer.ps1
-      
-      - name: Test help
-        working-directory: build
-        run: |          
-          Get-Help .\installer.ps1 -full
-
-      - name: Check installations 
-        working-directory: build
-        run: |
-          try { 
-              Get-Package sensing-dev            
-              Write-Error "Package exists" 
-            } catch { 
-              Write-Host "Package does not exists" 
-              Write-Host $_
-            }
-
-      - name: Installation using ZIP
-        working-directory: build
-        run: |
-          Write-Host "USERNAME = $env:USERNAME"
-          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ matrix.version }} -user "$env:USERNAME"
-          
-
-      - name: Test Env instaltion ZIP 
-        working-directory: build          
-        run: |
-          $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-          Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-
-          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-          Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-
-          $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
-          Write-Host PYTHONPATH = $PYTHONPATH
-
-          if (($GST_PLUGIN_PATH -ne "") -and ($PYTHONPATH -ne "") -and ($SENSING_DEV_ROOT -ne "")) { Write-Host "Success" } else { Write-Error "One or more required environment variables are not set" }
-          tree $SENSING_DEV_ROOT /f
-
-      - name: Test installation arv-tool
-        run: |
-          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-          $PATH= [Environment]::GetEnvironmentVariable("PATH", "User")
-          Write-Host PATH = $PATH
-          $env:PATH="$env:PATH;$PATH"
-          & arv-tool-0.8.exe
-
-      - name: Uninstallation
-        working-directory: build
-        run: |
-          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-          Remove-Item "$SENSING_DEV_ROOT" -Recurse -Force
+  test-installer-script:
+      strategy:
+        matrix:
+          version: ["${{ github.ref_name }}"] #[this release]
+          options: ["-user $env:USERNAME -InstallOpenCV ", "-user $env:USERNAME ", ""]
+  
+      uses: fixstars-sonali/sensing-dev-installer/.github/workflows/test-installer.yml@cd-cd/test-installer-script
+      with:
+        version: $
+        options: $
+      needs: release
         
 
   
