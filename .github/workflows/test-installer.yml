@@ -19,17 +19,17 @@ on:
         type: string
         default: ''
       options:
-        description: ''
+        description: 'Options for script'
         required: false
         type: string
-        default: ""
+        default: ''
     
 
 jobs:
   test-installer-script:
     name: Test installer script with options
     runs-on: windows-latest
-      
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
@@ -51,12 +51,14 @@ jobs:
         run: |
           mkdir build
           cd build
-          if($SCRIPT_PATH -ne ""){
-            $SCRIPT_PATH = "${{ github.workspace }}\installer\tools\installer.ps1"
+          if(${{ env.SCRIPT_PATH }} -ne ""){
             Copy-Item $SCRIPT_PATH -Destination .
+          }
+          elseif( ${{ env.URL }} -ne "" ){
+            Invoke-WebRequest ${{ env.URL }} -OutFile .\installer.ps1
           }          
           else{
-            $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/$VERSION/installer.ps1"
+            $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
             Invoke-WebRequest $URL -OutFile .\installer.ps1            
           }
 
@@ -79,13 +81,13 @@ jobs:
       - name: Installation using options
         working-directory: build
         run: |
-          Write-Host "Running script with OPTIONS = $OPTIONS"
-          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version $VERSION $OPTIONS
+          Write-Host "Running script with OPTIONS = ${{ env.OPTIONS }}"
+          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ env.OPTIONS }}
 
       - name: Test Env instaltion 
         working-directory: build          
         run: |
-          $expected_install_path = Join-Path -Path "$INSTALL_PATH" -ChildPath "$SDK_NAME"
+          $expected_install_path = Join-Path -Path "${{ env.INSTALL_PATH }}" -ChildPath "$SDK_NAME"
           Write-Host "expected_install_path : $expected_install_path"
   
           $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
