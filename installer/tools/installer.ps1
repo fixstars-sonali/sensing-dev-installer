@@ -60,6 +60,7 @@ function Test-WritePermission {
     if ($_.IdentityReference -eq $securityIdentifier) {
       if ($_.FileSystemRights -match "Write" -and $_.AccessControlType -eq "Allow") {
         $writeAllowed = $true
+        Write-Host "User $userName has write permission in $path"
       }
     }
   }
