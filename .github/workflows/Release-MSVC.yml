@@ -98,7 +98,8 @@ jobs:
     - name: Download installer
       working-directory: build
       run: |
-        $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+        $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+        # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
         Invoke-WebRequest $url -OutFile .\installer.ps1
     
     - name: Test help
