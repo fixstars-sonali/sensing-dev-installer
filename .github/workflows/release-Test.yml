@@ -82,7 +82,7 @@ jobs:
           $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
           Write-Host PATH = $PATH
           $BinPATH = Join-Path -Path "$expected_install_path" -ChildPath "bin"
-          if($Env:Path -split ";" -contains $BinPATH)
+          if($PATH -split ";" -contains $BinPATH)
           {
             $env:PATH="$env:PATH;$PATH"
           }
@@ -204,7 +204,7 @@ jobs:
         $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
         Write-Host PATH = $PATH
         $BinPATH = Join-Path -Path "$expected_install_path" -ChildPath "bin"
-        if($Env:Path -split ";" -contains $BinPATH)
+        if($PATH -split ";" -contains $BinPATH)
         {
           $env:PATH="$env:PATH;$PATH"
         }
