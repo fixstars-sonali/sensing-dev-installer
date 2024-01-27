@@ -83,12 +83,17 @@ jobs:
     strategy:
       matrix:
         options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV"] 
+        version: ["v23.11.01", '']
+        exclude:
+          - version: "v23.11.01"
+          - options: "-user $env:USERNAME -InstallOpenCV"
+
     runs-on: windows-latest
     needs: release
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
       SDK_NAME : "sensing-dev"
-      VERSION : ${{ github.ref_name }}
+      VERSION : ${{ matrix.version == '' && github.ref_name || matrix.version}}
 
     steps:     
     - name: Create and enter build directory
