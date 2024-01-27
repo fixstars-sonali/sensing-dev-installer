@@ -1,0 +1,168 @@
+name: Test installer.ps1
+
+on:
+  workflow_call:
+    inputs:
+      script_path:
+        description: 'Path to installer script'
+        required: false
+        type: string
+        default: ""
+      version:
+        description: 'version of sensing-dev'
+        required: true
+        type: string
+        default: 'v24.01.01'
+      url:
+        description: 'url of installer.ps1'
+        required: false
+        type: string
+        default: ''
+      options:
+        description: ''
+        required: false
+        type: string
+        default: ""
+    
+
+jobs:
+  test-installer-script:
+    name: Test installer script with options
+    runs-on: windows-latest
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - id: set-up-env
+        name: Set up environment
+        run: |
+          echo "SCRIPT_PATH=$" >> $GITHUB_ENV
+          echo "VERSION=$" >> $GITHUB_ENV
+          echo "URL=$" >> $GITHUB_ENV
+          echo "OPTIONS=$" >> $GITHUB_ENV
+          echo "INSTALL_PATH=$env:LOCALAPPDATA" >> $GITHUB_ENV
+          echo "SDK_NAME='sensing-dev'" >> $GITHUB_ENV
+      
+      - id: copy-to-build
+        name: Copy or Download script to build dir
+        run: |
+          mkdir build
+          cd build
+          if($SCRIPT_PATH -ne ""){
+            $SCRIPT_PATH = ".\tools\installer.ps1"
+            Copy-Item $SCRIPT_PATH -Destination .
+          }          
+          else{
+            $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/$VERSION/installer.ps1"
+            Invoke-WebRequest $URL -OutFile .\installer.ps1            
+          }
+
+      - name: Test help
+        working-directory: build
+        run: |          
+          Get-Help .\installer.ps1 -full
+          
+      - name: Check existing installations 
+        working-directory: build
+        run: |
+          try { 
+              Get-Package sensing-dev            
+              Write-Error "Package exists" 
+          } 
+          catch { 
+              Write-Host $_
+          }
+
+      - name: Installation using options
+        working-directory: build
+        run: |
+          Write-Host "Running script with OPTIONS = $OPTIONS"
+          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version $VERSION $OPTIONS
+
+      - name: Test Env instaltion 
+        working-directory: build          
+        run: |
+          $expected_install_path = Join-Path -Path "$INSTALL_PATH" -ChildPath "$SDK_NAME"
+          Write-Host "expected_install_path : $expected_install_path"
+  
+          $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+          Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+          if(${expected_install_path} -eq ${GST_PLUGIN_PATH}){
+            $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
+          }
+          else {
+            Write-Error "env:GST_PLUGIN_PATH required environment variable are not set"
+          }
+  
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+          if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
+            $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          }
+          else {
+            Write-Error "env:SENSING_DEV_ROOT required environment variable are not set"
+          }
+  
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH
+          $BinPATH = Join-Path -Path "$expected_install_path" -ChildPath "bin"
+          if($PATH -split ";" -contains $BinPATH)
+          {
+            $env:PATH="$env:PATH;$PATH"
+          }
+          else {
+            Write-Error "env:PATH Does not contain '$BinPATH'"
+          }
+  
+          $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
+          Write-Host PYTHONPATH = $PYTHONPATH
+
+      - name: Test files instaltion ZIP 
+        working-directory: build          
+        run: |
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          
+          tree $env:SENSING_DEV_ROOT /a
+  
+          echo "::group::bin"
+          tree $env:SENSING_DEV_ROOT/bin /f /a
+          echo "::endgroup::"
+  
+          echo "::group::include"
+          tree $env:SENSING_DEV_ROOT/include /f /a
+          echo "::endgroup::"
+  
+          echo "::group::lib"
+          tree $env:SENSING_DEV_ROOT/lib /f /a
+          echo "::endgroup::"
+  
+          echo "::group::license"
+          tree $env:SENSING_DEV_ROOT/license /f /a
+          echo "::endgroup::"
+  
+          echo "::group::share"
+          tree $env:SENSING_DEV_ROOT/share /f /a
+          echo "::endgroup::"
+  
+          echo "::group::tools"
+          tree $env:SENSING_DEV_ROOT/tools /f /a
+          echo "::endgroup::"
+      
+      - name: Test installation arv-tool
+        run: |
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH        
+          $env:PATH="$env:PATH;$PATH"
+          & arv-tool-0.8.exe
+    
+      - name: Uninstallation
+        working-directory: build
+        run: |
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
+    
