@@ -41,11 +41,13 @@ jobs:
         run: |
           mkdir build
           cd build
-          if(${{ inputs.SCRIPT_PATH }} -ne ""){
+          $SCRIPT_PATH= "${{ inputs.SCRIPT_PATH }}"
+          $URL = "${{ inputs.URL }}"
+          if( $SCRIPT_PATH -ne ""){
             Copy-Item $SCRIPT_PATH -Destination .
           }
-          elseif( ${{ inputs.URL }} -ne "" ){
-            Invoke-WebRequest ${{ inputs.URL }} -OutFile .\installer.ps1
+          elseif( $URL -ne "" ){
+            Invoke-WebRequest $URL -OutFile .\installer.ps1
           }          
           else{
             $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ inputs.VERSION }}/installer.ps1"
