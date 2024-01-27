@@ -92,7 +92,7 @@ jobs:
     strategy:
       matrix:
         script_path : ["${{ github.workspace }}\\installer\\tools\\installer.ps1"]
-        # version: ["${{ github.ref_name }}"] #[this release]
+        version: ["${{ github.ref_name }}"] #[this release]
         options: ["-user $env:USERNAME -InstallOpenCV ", "-user $env:USERNAME ", ""]
 
     uses: fixstars-sonali/sensing-dev-installer/.github/workflows/test-installer.yml@cd-cd/test-installer-script
