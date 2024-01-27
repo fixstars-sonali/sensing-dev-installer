@@ -96,6 +96,8 @@ jobs:
       - name: Test files instaltion ZIP 
         working-directory: build          
         run: |
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
           tree $env:SENSING_DEV_ROOT /a
 
           echo "::group::bin"
@@ -132,6 +134,8 @@ jobs:
       - name: Uninstallation
         working-directory: build
         run: |
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
           Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
 
   test-installer-script-zip-opencv:
@@ -222,15 +226,8 @@ jobs:
       working-directory: build          
       run: |
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-        if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
-          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-        }
-        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-        if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
-          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-        }
+        $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+       
         tree $env:SENSING_DEV_ROOT /a
 
         echo "::group::bin"
@@ -267,4 +264,6 @@ jobs:
     - name: Uninstallation
       working-directory: build
       run: |
+        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+        $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
         Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
