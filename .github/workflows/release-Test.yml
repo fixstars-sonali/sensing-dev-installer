@@ -226,6 +226,11 @@ jobs:
         if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
           $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
         }
+        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+        if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+        }
         tree $env:SENSING_DEV_ROOT /a
 
         echo "::group::bin"
