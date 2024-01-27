@@ -86,7 +86,7 @@ jobs:
         version: ["v23.11.01", '']
         exclude:
           - version: "v23.11.01"
-          - options: "-user $env:USERNAME -InstallOpenCV"
+            options: "-user $env:USERNAME -InstallOpenCV"
 
     runs-on: windows-latest
     needs: release
