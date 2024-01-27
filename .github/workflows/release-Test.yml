@@ -46,7 +46,6 @@ jobs:
               Write-Error "Package exists" 
             } 
           catch { 
-              Write-Host "Package does not exists" 
               Write-Host $_
             }
 
@@ -59,7 +58,8 @@ jobs:
       - name: Test Env instaltion ZIP 
         working-directory: build          
         run: |
-          $expected_install_path = "${{ env.INSTALL_PATH }}/${{ env.SDK_NAME }}"
+          $expected_install_path = Join-Path -Path "${{ env.INSTALL_PATH }}" -ChildPath "${{ env.SDK_NAME }}"
+          Write-Host "expected_install_path : $expected_install_path"
 
           $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
           Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
