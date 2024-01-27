@@ -124,6 +124,9 @@ jobs:
           
       - name: Test installation arv-tool
         run: |
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH        
+          $env:PATH="$env:PATH;$PATH"
           & arv-tool-0.8.exe
 
       - name: Uninstallation
@@ -218,6 +221,11 @@ jobs:
     - name: Test files instaltion ZIP 
       working-directory: build          
       run: |
+        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+        if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+        }
         tree $env:SENSING_DEV_ROOT /a
 
         echo "::group::bin"
@@ -246,6 +254,9 @@ jobs:
         
     - name: Test installation arv-tool
       run: |
+        $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+        Write-Host PATH = $PATH        
+        $env:PATH="$env:PATH;$PATH"
         & arv-tool-0.8.exe
 
     - name: Uninstallation
