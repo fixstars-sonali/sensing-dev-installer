@@ -276,5 +276,5 @@ jobs:
 
     uses: fixstars-sonali/sensing-dev-installer/.github/workflows/test-installer.yml@cd-cd/test-installer-script
     with:
-      version: $
-      options: $
+      version: ${{ matrix.version }}
+      options: ${{ matrix.options }}
