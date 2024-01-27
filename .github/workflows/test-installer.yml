@@ -52,7 +52,7 @@ jobs:
           mkdir build
           cd build
           if($SCRIPT_PATH -ne ""){
-            $SCRIPT_PATH = ".\tools\installer.ps1"
+            $SCRIPT_PATH = "${{ github.workspace }}\tools\installer.ps1"
             Copy-Item $SCRIPT_PATH -Destination .
           }          
           else{
