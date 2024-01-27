@@ -267,3 +267,14 @@ jobs:
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
         $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
         Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
+
+  test-reusable-workflow:
+    strategy:
+      matrix:
+        version: [v23.11.01, v24.01.01] #[stable, latest]
+        options: ["-user $env:USERNAME -InstallOpenCV ", "-user $env:USERNAME ", ""]
+
+    uses: fixstars-sonali/sensing-dev-installer/.github/workflows/test-installer.yml@cd-cd/test-installer-script
+    with:
+      version: $
+      options: $
