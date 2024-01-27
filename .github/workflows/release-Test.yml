@@ -87,7 +87,7 @@ jobs:
             $env:PATH="$env:PATH;$PATH"
           }
           else {
-            Write-Error "env:PATH Does not contain '$SENSING_DEV_ROOT/bin'"
+            Write-Error "env:PATH Does not contain '$BinPATH'"
           }
 
           $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
@@ -209,7 +209,7 @@ jobs:
           $env:PATH="$env:PATH;$PATH"
         }
         else {
-          Write-Error "env:PATH Does not contain '$SENSING_DEV_ROOT/bin'"
+          Write-Error "env:PATH Does not contain '$BinPATH'"
         }
 
         $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
