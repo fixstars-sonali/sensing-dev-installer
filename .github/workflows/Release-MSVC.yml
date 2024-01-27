@@ -79,7 +79,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-installer-script-zip:    
+  test-installer-script-zip:   
+    strategy:
+      matrix:
+        options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV"]
     runs-on: windows-latest
     needs: release
     env:
@@ -102,7 +105,7 @@ jobs:
       working-directory: build
       run: |          
         Get-Help .\installer.ps1 -full
-        
+
     - name: Check installations 
       working-directory: build
       run: |
@@ -118,7 +121,7 @@ jobs:
       working-directory: build
       run: |
         Write-Host "USERNAME = $env:USERNAME"
-        powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} -user "$env:USERNAME"          
+        powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}          
     
     - name: Test Env instaltion ZIP 
       working-directory: build          
@@ -195,6 +198,8 @@ jobs:
 
   test-installer-script-zip-opencv:
     runs-on: windows-latest
+    needs: release
+
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
       SDK_NAME : "sensing-dev"
