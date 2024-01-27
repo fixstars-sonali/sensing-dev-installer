@@ -10,14 +10,12 @@ on:
       - '*'  # This will run the build and test jobs for pull requests to all branches
 
 
-test-installer-script-zip:
+jobs:
+  test-installer-script-zip:
     strategy:
       matrix:
         version: [v23.11.01, v24.01.01] 
-        # version: [v23.11.01, ''] 
     runs-on: windows-latest
-    needs: build
-
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
       SDK_NAME : "sensing-dev"
@@ -132,13 +130,11 @@ test-installer-script-zip:
         run: |
           Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
 
-  test-installer-script-zip-pencv:
+  test-installer-script-zip-opencv:
     strategy:
       matrix:
-        # version: [v23.11.01, v24.01.01] 
         version: [v24.01.01] 
     runs-on: windows-latest
-    needs: build
 
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
@@ -146,110 +142,110 @@ test-installer-script-zip:
       VERSION : ${{ matrix.version == '' && github.ref_name || matrix.version}}
 
     steps:     
-      - name: Create and enter build directory
-        run: |
-          mkdir build
-          cd build
+    - name: Create and enter build directory
+      run: |
+        mkdir build
+        cd build
 
-      - name: Download installer
-        working-directory: build
-        run: |
-          $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-          Invoke-WebRequest $url -OutFile .\installer.ps1
-      
-      - name: Test help
-        working-directory: build
-        run: |          
-          Get-Help .\installer.ps1 -full
+    - name: Download installer
+      working-directory: build
+      run: |
+        $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+        Invoke-WebRequest $url -OutFile .\installer.ps1
+    
+    - name: Test help
+      working-directory: build
+      run: |          
+        Get-Help .\installer.ps1 -full
 
-      - name: Check installations 
-        working-directory: build
-        run: |
-          try { 
-              Get-Package sensing-dev            
-              Write-Error "Package exists" 
+    - name: Check installations 
+      working-directory: build
+      run: |
+        try { 
+            Get-Package sensing-dev            
+            Write-Error "Package exists" 
             } 
-          catch { 
-              Write-Host "Package does not exists" 
-              Write-Host $_
+        catch { 
+            Write-Host "Package does not exists" 
+            Write-Host $_
             }
 
-      - name: Installation using ZIP
-        working-directory: build
-        run: |
-          Write-Host "USERNAME = $env:USERNAME"
-          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} -user "$env:USERNAME -InstallOpenCV"          
+    - name: Installation using ZIP with OpenCV
+      working-directory: build
+      run: |
+        Write-Host "USERNAME = $env:USERNAME"
+        powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} -user "$env:USERNAME -InstallOpenCV"          
 
-      - name: Test Env instaltion ZIP 
-        working-directory: build          
-        run: |
-          $expected_install_path = "${{ env.INSTALL_PATH }}/${{ env.SDK_NAME }}"
+    - name: Test Env instaltion ZIP 
+      working-directory: build          
+      run: |
+        $expected_install_path = "${{ env.INSTALL_PATH }}/${{ env.SDK_NAME }}"
 
-          $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-          Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-          if(${expected_install_path} -eq ${GST_PLUGIN_PATH}){
+        $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+        Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+        if(${expected_install_path} -eq ${GST_PLUGIN_PATH}){
             $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
-          }
-          else {
+        }
+        else {
             Write-Error "env:GST_PLUGIN_PATH required environment variable are not set"
-          }
+        }
 
-          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-          Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-          if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
+        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+        if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
             $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-          }
-          else {
+        }
+        else {
             Write-Error "env:SENSING_DEV_ROOT required environment variable are not set"
-          }
+        }
 
-          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-          Write-Host PATH = $PATH
-          if($Env:Path -split ";" -contains $directory)
-          {
+        $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+        Write-Host PATH = $PATH
+        if($Env:Path -split ";" -contains $directory)
+        {
             $env:PATH="$env:PATH;$PATH"
-          }
-          else {
+        }
+        else {
             Write-Error "env:PATH Does not contain '$SENSING_DEV_ROOT/bin'"
-          }
+        }
 
-          $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
-          Write-Host PYTHONPATH = $PYTHONPATH
+        $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
+        Write-Host PYTHONPATH = $PYTHONPATH
 
-      - name: Test files instaltion ZIP 
-        working-directory: build          
-        run: |
-          tree $env:SENSING_DEV_ROOT /a
+    - name: Test files instaltion ZIP 
+      working-directory: build          
+      run: |
+        tree $env:SENSING_DEV_ROOT /a
 
-          echo "::group::bin"
-          tree $env:SENSING_DEV_ROOT/bin /f /a
-          echo "::endgroup::"
+        echo "::group::bin"
+        tree $env:SENSING_DEV_ROOT/bin /f /a
+        echo "::endgroup::"
 
-          echo "::group::include"
-          tree $env:SENSING_DEV_ROOT/include /f /a
-          echo "::endgroup::"
+        echo "::group::include"
+        tree $env:SENSING_DEV_ROOT/include /f /a
+        echo "::endgroup::"
 
-          echo "::group::lib"
-          tree $env:SENSING_DEV_ROOT/lib /f /a
-          echo "::endgroup::"
+        echo "::group::lib"
+        tree $env:SENSING_DEV_ROOT/lib /f /a
+        echo "::endgroup::"
 
-          echo "::group::license"
-          tree $env:SENSING_DEV_ROOT/license /f /a
-          echo "::endgroup::"
+        echo "::group::license"
+        tree $env:SENSING_DEV_ROOT/license /f /a
+        echo "::endgroup::"
 
-          echo "::group::share"
-          tree $env:SENSING_DEV_ROOT/share /f /a
-          echo "::endgroup::"
+        echo "::group::share"
+        tree $env:SENSING_DEV_ROOT/share /f /a
+        echo "::endgroup::"
 
-          echo "::group::tools"
-          tree $env:SENSING_DEV_ROOT/tools /f /a
-          echo "::endgroup::"
-          
-      - name: Test installation arv-tool
-        run: |
-          & arv-tool-0.8.exe
+        echo "::group::tools"
+        tree $env:SENSING_DEV_ROOT/tools /f /a
+        echo "::endgroup::"
+        
+    - name: Test installation arv-tool
+      run: |
+        & arv-tool-0.8.exe
 
-      - name: Uninstallation
-        working-directory: build
-        run: |
-          Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
+    - name: Uninstallation
+      working-directory: build
+      run: |
+        Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
