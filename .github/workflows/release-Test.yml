@@ -14,7 +14,7 @@ jobs:
   test-installer-script-zip:
     strategy:
       matrix:
-        version: [v23.11.01, v24.01.01] 
+        version: [v23.11.01, v24.01.01] #[stable, latest]
     runs-on: windows-latest
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
@@ -81,7 +81,8 @@ jobs:
 
           $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
           Write-Host PATH = $PATH
-          if($Env:Path -split ";" -contains $directory)
+          $BinPATH = Join-Path -Path "$expected_install_path" -ChildPath "bin"
+          if($Env:Path -split ";" -contains $BinPATH)
           {
             $env:PATH="$env:PATH;$PATH"
           }
@@ -179,34 +180,36 @@ jobs:
     - name: Test Env instaltion ZIP 
       working-directory: build          
       run: |
-        $expected_install_path = "${{ env.INSTALL_PATH }}/${{ env.SDK_NAME }}"
+        $expected_install_path = Join-Path -Path "${{ env.INSTALL_PATH }}" -ChildPath "${{ env.SDK_NAME }}"
+        Write-Host "expected_install_path : $expected_install_path"
 
         $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
         Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
         if(${expected_install_path} -eq ${GST_PLUGIN_PATH}){
-            $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
+          $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
         }
         else {
-            Write-Error "env:GST_PLUGIN_PATH required environment variable are not set"
+          Write-Error "env:GST_PLUGIN_PATH required environment variable are not set"
         }
 
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
         Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
         if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
-            $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
         }
         else {
-            Write-Error "env:SENSING_DEV_ROOT required environment variable are not set"
+          Write-Error "env:SENSING_DEV_ROOT required environment variable are not set"
         }
 
         $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
         Write-Host PATH = $PATH
-        if($Env:Path -split ";" -contains $directory)
+        $BinPATH = Join-Path -Path "$expected_install_path" -ChildPath "bin"
+        if($Env:Path -split ";" -contains $BinPATH)
         {
-            $env:PATH="$env:PATH;$PATH"
+          $env:PATH="$env:PATH;$PATH"
         }
         else {
-            Write-Error "env:PATH Does not contain '$SENSING_DEV_ROOT/bin'"
+          Write-Error "env:PATH Does not contain '$SENSING_DEV_ROOT/bin'"
         }
 
         $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
