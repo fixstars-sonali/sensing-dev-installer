@@ -3,22 +3,21 @@ name: Sensing dev installer Script Test
 on:
   workflow_dispatch:
     inputs:
-      stable-version:
-        description: 'Stable Version'
-        required: true
-        default: 'v23.11.01'
-      latest-version:
-        description: 'Latest Version'
-        required: true
-        default: 'v24.01.02'
+      versions:
+        description: 'List of versions to test'
+        default: '["v23.11.01", "v24.01.01"]'
+      options:
+        description: 'List of script options to test'
+        default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] '
+
 
 
 jobs:
   test-installer-script:   
     strategy:
       matrix:
-        version: [ ${{ fromJson(github.event.inputs.stable-version) }}, ${{ fromJson(github.event.inputs.latest-version) }}]
-        options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 
+        version: ${{ fromJson(github.event.inputs.versions) }}
+        options: ${{ fromJson(github.event.inputs.options) }}
         exclude:
           - version: "v23.11.01"
             options: ["-user $env:USERNAME -InstallOpenCV", "-InstallOpenCV"]
