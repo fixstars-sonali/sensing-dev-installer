@@ -151,7 +151,12 @@ function Install-MsiPackage {
     else {
         Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList $msiExecArgs -Verb RunAs
     }
-
+    if ($?) {
+        Write-Host "${installerName} installed at ${installPath}. See detailed log here ${log} "
+    }
+    else {
+        Write-Error "The ${installerName} installation encountered an error. See detailed log here ${log}"        
+    }
     if (Test-Path $logPath) {
         Write-Host "Installation log created at $logPath"
     }

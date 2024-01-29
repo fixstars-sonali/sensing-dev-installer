@@ -13,8 +13,8 @@ jobs:
   test-installer-script:   
     strategy:
       matrix:
-        options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 
         version: ["v24.01.02"]
+        options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 
         exclude:
           - version: "v23.11.01"
             options: ["-user $env:USERNAME -InstallOpenCV", "-InstallOpenCV"]
