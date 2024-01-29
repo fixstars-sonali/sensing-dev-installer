@@ -31,23 +31,23 @@ jobs:
       with:
         submodules: recursive
 
-    - id: copy-to-build
-      name: Copy or Download script to build dir
-      run: |
-        mkdir build
-        cd build
-        $SCRIPT_PATH= "${{ github.workspace }}\installer\tools\installer.ps1"
-        $URL = ""
-        if( $SCRIPT_PATH -ne ""){
-          Copy-Item $SCRIPT_PATH -Destination .
-        }
-        elseif( $URL -ne "" ){
-          Invoke-WebRequest $URL -OutFile .\installer.ps1
-        }          
-        else{
-          $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-          Invoke-WebRequest $URL -OutFile .\installer.ps1            
-        }
+    # - id: copy-to-build
+    #   name: Copy or Download script to build dir
+    #   run: |
+    #     mkdir build
+    #     cd build
+    #     $SCRIPT_PATH= "${{ github.workspace }}\installer\tools\installer.ps1"
+    #     $URL = ""
+    #     if( $SCRIPT_PATH -ne ""){
+    #       Copy-Item $SCRIPT_PATH -Destination .
+    #     }
+    #     elseif( $URL -ne "" ){
+    #       Invoke-WebRequest $URL -OutFile .\installer.ps1
+    #     }          
+    #     else{
+    #       $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+    #       Invoke-WebRequest $URL -OutFile .\installer.ps1            
+    #     }
 
     # - name: Create and enter build directory
     #   run: |
@@ -61,12 +61,12 @@ jobs:
     #     Invoke-WebRequest $url -OutFile .\installer.ps1
 
     - name: Test help
-      working-directory: build
+      working-directory: installer\tools
       run: |          
         Get-Help .\installer.ps1 -full
 
     - name: Check installations 
-      working-directory: build
+      working-directory: installer\tools
       run: |
         try { 
             Get-Package sensing-dev            
@@ -77,13 +77,13 @@ jobs:
           }
 
     - name: Installation 
-      working-directory: build
+      working-directory: installer\tools
       run: |
         Write-Host "USERNAME = $env:USERNAME"
         powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}          
 
     - name: Test Env instaltion  
-      working-directory: build          
+      working-directory: installer\tools          
       run: |
         $expected_install_path = Join-Path -Path "${{ env.INSTALL_PATH }}" -ChildPath "${{ env.SDK_NAME }}"
         Write-Host "expected_install_path : $expected_install_path"
@@ -117,7 +117,7 @@ jobs:
         Write-Host PYTHONPATH = $PYTHONPATH
 
     - name: Test files instaltion  
-      working-directory: build          
+      working-directory: installer\tools          
       run: |
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
         $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
@@ -149,7 +149,7 @@ jobs:
         & arv-tool-0.8.exe
 
     - name: Uninstallation
-      working-directory: build
+      working-directory: installer\tools
       run: |
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
         $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
