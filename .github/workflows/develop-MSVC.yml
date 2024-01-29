@@ -90,17 +90,128 @@ jobs:
 
       
             
-  test:
+  test-script:
     needs: build
+    strategy:
+      matrix:
+        version: ["v24.01.02"]
+        options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 
+        exclude:
+          - version: "v23.11.01"
+            options: ["-user $env:USERNAME -InstallOpenCV", "-InstallOpenCV"]
+
     runs-on: windows-latest
+    env:
+      INSTALL_PATH: "$env:LOCALAPPDATA"
+      SDK_NAME : "sensing-dev"
+      VERSION : ${{ matrix.version }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
 
-      - name: Run tests
+      - name: Test help
+        working-directory: installer\tools
+        run: |          
+          Get-Help .\installer.ps1 -full
+  
+      - name: Check installations 
+        working-directory: installer\tools
         run: |
-          echo "TODO : Running tests..."
+          try { 
+              Get-Package sensing-dev            
+              Write-Error "Package exists" 
+            } 
+          catch { 
+              Write-Host $_
+            }
+  
+      - name: Installation 
+        working-directory: installer\tools
+        run: |
+          Write-Host "USERNAME = $env:USERNAME"
+          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 ${{ matrix.options }}          
+  
+      - name: Test Env instaltion  
+        working-directory: installer\tools          
+        run: |
+          $expected_install_path = Join-Path -Path "${{ env.INSTALL_PATH }}" -ChildPath "${{ env.SDK_NAME }}"
+          Write-Host "expected_install_path : $expected_install_path"
+          $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+          Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+          if(${expected_install_path} -eq ${GST_PLUGIN_PATH}){
+            $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
+          }
+          else {
+            Write-Error "env:GST_PLUGIN_PATH required environment variable are not set"
+          }
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+          if(${expected_install_path} -eq ${SENSING_DEV_ROOT}){
+            $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          }
+          else {
+            Write-Error "env:SENSING_DEV_ROOT required environment variable are not set"
+          }
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH
+          $BinPATH = Join-Path -Path "$expected_install_path" -ChildPath "bin"
+          if($PATH -split ";" -contains $BinPATH)
+          {
+            $env:PATH="$env:PATH;$PATH"
+          }
+          else {
+            Write-Error "env:PATH Does not contain '$BinPATH'"
+          }
+          $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
+          Write-Host PYTHONPATH = $PYTHONPATH
+          $newPythonPath = "${installPath}\lib\site-packages"
+          if($PYTHONPATH -split ";" -contains $newPythonPath)
+          {
+            $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
+          }
+          else {
+            Write-Error "env:PYTHONPATH Does not contain '$newPythonPath'"
+          }
+  
+      - name: Test files instaltion  
+        working-directory: installer\tools          
+        run: |
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          tree $env:SENSING_DEV_ROOT /a
+          echo "::group::bin"
+          tree $env:SENSING_DEV_ROOT/bin /f /a
+          echo "::endgroup::"
+          echo "::group::include"
+          tree $env:SENSING_DEV_ROOT/include /f /a
+          echo "::endgroup::"
+          echo "::group::lib"
+          tree $env:SENSING_DEV_ROOT/lib /f /a
+          echo "::endgroup::"
+          echo "::group::license"
+          tree $env:SENSING_DEV_ROOT/license /f /a
+          echo "::endgroup::"
+          echo "::group::share"
+          tree $env:SENSING_DEV_ROOT/share /f /a
+          echo "::endgroup::"
+          echo "::group::tools"
+          tree $env:SENSING_DEV_ROOT/tools /f /a
+          echo "::endgroup::"
+          
+      - name: Test installation arv-tool
+        run: |
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH        
+          $env:PATH="$env:PATH;$PATH"
+          & arv-tool-0.8.exe
+  
+      - name: Uninstallation
+        working-directory: installer\tools
+        run: |
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
 
   
 
