@@ -10,7 +10,7 @@ on:
       - '*'  # This will run the build and test jobs for pull requests to all branches
 
 jobs:
-  test-installer-script-zip:   
+  test-installer-script:   
     strategy:
       matrix:
         options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 

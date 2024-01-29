@@ -49,9 +49,12 @@ param(
 function Test-WritePermission {
     param (
         [string]$path,
-        [string]$user
+        [string]$user = $env:USERNAME
     )
-
+    if (-not $user) {
+        $user = $env:USERNAME
+    }
+    Write-Host "User: '$user'"
     $writeAllowed = $false
     $acl = Get-Acl $path
     $securityIdentifier = New-Object System.Security.Principal.NTAccount($user)
@@ -169,7 +172,7 @@ if (-not $installPath) {
 }
 Write-Verbose "installPath = $installPath"
 
-$hasAccess = Test-WritePermission($installPath, $user)
+$hasAccess = Test-WritePermission -user $user -path $installPath
 
 $installerName = "sensing-dev"
 $installerPostfixName = if ($InstallOpenCV) { "" } else { "-no-opencv" }
