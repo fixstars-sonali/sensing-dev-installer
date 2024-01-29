@@ -25,17 +25,40 @@ jobs:
       SDK_NAME : "sensing-dev"
       VERSION : ${{ matrix.version }}
 
-    steps:     
-    - name: Create and enter build directory
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.1
+      with:
+        submodules: recursive
+
+    - id: copy-to-build
+      name: Copy or Download script to build dir
       run: |
         mkdir build
         cd build
-    - name: Download installer
-      working-directory: build
-      run: |
-        $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
-        # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-        Invoke-WebRequest $url -OutFile .\installer.ps1
+        $SCRIPT_PATH= "${{ github.workspace }}\installer\tools\installer.ps1"
+        $URL = ""
+        if( $SCRIPT_PATH -ne ""){
+          Copy-Item $SCRIPT_PATH -Destination .
+        }
+        elseif( $URL -ne "" ){
+          Invoke-WebRequest $URL -OutFile .\installer.ps1
+        }          
+        else{
+          $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+          Invoke-WebRequest $URL -OutFile .\installer.ps1            
+        }
+
+    # - name: Create and enter build directory
+    #   run: |
+    #     mkdir build
+    #     cd build
+    # - name: Download installer
+    #   working-directory: build
+    #   run: |
+    #     $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+    #     # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+    #     Invoke-WebRequest $url -OutFile .\installer.ps1
 
     - name: Test help
       working-directory: build
@@ -53,13 +76,13 @@ jobs:
             Write-Host $_
           }
 
-    - name: Installation using ZIP
+    - name: Installation 
       working-directory: build
       run: |
         Write-Host "USERNAME = $env:USERNAME"
         powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}          
 
-    - name: Test Env instaltion ZIP 
+    - name: Test Env instaltion  
       working-directory: build          
       run: |
         $expected_install_path = Join-Path -Path "${{ env.INSTALL_PATH }}" -ChildPath "${{ env.SDK_NAME }}"
@@ -93,7 +116,7 @@ jobs:
         $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
         Write-Host PYTHONPATH = $PYTHONPATH
 
-    - name: Test files instaltion ZIP 
+    - name: Test files instaltion  
       working-directory: build          
       run: |
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
