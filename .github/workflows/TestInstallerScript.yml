@@ -1,4 +1,4 @@
-name: Sensing dev installer Script Test
+name: Multiple version test
 
 on:
   workflow_dispatch:
