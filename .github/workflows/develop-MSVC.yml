@@ -165,7 +165,7 @@ jobs:
           }
           $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
           Write-Host PYTHONPATH = $PYTHONPATH
-          $newPythonPath = "${installPath}\lib\site-packages"
+          $newPythonPath = Join-Path -Path "$expected_install_path" -ChildPath "lib\site-packages"
           if($PYTHONPATH -split ";" -contains $newPythonPath)
           {
             $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
