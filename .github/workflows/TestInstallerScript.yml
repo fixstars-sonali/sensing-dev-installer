@@ -1,19 +1,23 @@
 name: Sensing dev installer Script Test
 
 on:
-  push:
-    branches:
-      - '*'  # This will run the build and test jobs for every push on all branches
+  workflow_dispatch:
+    inputs:
+      stable-version:
+        description: 'Stable Version'
+        required: true
+        default: 'v23.11.01'
+      latest-version:
+        description: 'Latest Version'
+        required: true
+        default: 'v24.01.02'
 
-  pull_request:
-    branches:
-      - '*'  # This will run the build and test jobs for pull requests to all branches
 
 jobs:
   test-installer-script:   
     strategy:
       matrix:
-        version: ["v24.01.02"]
+        version: [ ${{ fromJson(github.event.inputs.stable-version) }}, ${{ fromJson(github.event.inputs.latest-version) }}]
         options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 
         exclude:
           - version: "v23.11.01"
@@ -31,34 +35,16 @@ jobs:
       with:
         submodules: recursive
 
-    # - id: copy-to-build
-    #   name: Copy or Download script to build dir
-    #   run: |
-    #     mkdir build
-    #     cd build
-    #     $SCRIPT_PATH= "${{ github.workspace }}\installer\tools\installer.ps1"
-    #     $URL = ""
-    #     if( $SCRIPT_PATH -ne ""){
-    #       Copy-Item $SCRIPT_PATH -Destination .
-    #     }
-    #     elseif( $URL -ne "" ){
-    #       Invoke-WebRequest $URL -OutFile .\installer.ps1
-    #     }          
-    #     else{
-    #       $URL = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-    #       Invoke-WebRequest $URL -OutFile .\installer.ps1            
-    #     }
-
-    # - name: Create and enter build directory
-    #   run: |
-    #     mkdir build
-    #     cd build
-    # - name: Download installer
-    #   working-directory: build
-    #   run: |
-    #     $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
-    #     # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-    #     Invoke-WebRequest $url -OutFile .\installer.ps1
+    - name: Create and enter build directory
+      run: |
+        mkdir build
+        cd build
+    - name: Download installer
+      working-directory: build
+      run: |
+        $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+        # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+        Invoke-WebRequest $url -OutFile .\installer.ps1
 
     - name: Test help
       working-directory: installer\tools
