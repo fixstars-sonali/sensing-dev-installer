@@ -45,116 +45,162 @@ param(
     [string]$installPath,
     [switch]$InstallOpenCV = $false 
 )
-# Check if the MSI URL and Install Path are provided
-if ( -not $installPath) {
 
-    if ($user) {
-        # If a username is provided, get that user's LOCALAPPDATA path
-        $UserProfilePath = "C:\Users\$user"
-        $installPath = Join-Path -Path $UserProfilePath -ChildPath "AppData\Local"
+function Test-WritePermission {
+    param (
+        [string]$path,
+        [string]$user
+    )
+
+    $writeAllowed = $false
+    $acl = Get-Acl $path
+    $securityIdentifier = New-Object System.Security.Principal.NTAccount($user)
+
+    foreach ($access in $acl.Access) {
+        if ($access.IdentityReference -eq $securityIdentifier) {
+            if ($access.FileSystemRights -match "Write" -and $access.AccessControlType -eq "Allow") {
+                Write-Host "$user has write permission for $path"
+                $writeAllowed = $true
+                break
+            }
+        }
+    }
+
+    if (-not $writeAllowed) {
+        Write-Host "$user needs write permission for $path"
+    }
+
+    return $writeAllowed
+}
+function Get-LatestVersion {
+    [CmdletBinding()]
+    param (
+        [string]$Repository = "Sensing-Dev/sensing-dev-installer"
+    )
+
+    $RepoApiUrl = "https://api.github.com/repos/$Repository/releases/latest"
+
+    try {
+        $response = Invoke-RestMethod -Uri $RepoApiUrl -Headers @{Accept = "application/vnd.github.v3+json" }
+        $latestVersion = $response.tag_name
+
+        if ($latestVersion) {
+            Write-Output $latestVersion
+        }
+        else {
+            Write-Error "Latest version not found."
+        }
+    }
+    catch {
+        Write-Error "Error fetching the latest version: $_"
+    }
+}
+
+function Install-ZipPackage {
+    param (
+        [string]$Url,
+        [string]$installPath,
+        [string]$installerName,
+        [string]$versionNum
+    )
+
+    $tempZipPath = Join-Path $env:TEMP "$installerName.zip"
+    Invoke-WebRequest -Uri $Url -OutFile $tempZipPath
+
+    $tempExtractionPath = Join-Path $installPath "_tempExtraction"
+    if (!(Test-Path $tempExtractionPath)) {
+        New-Item -Path $tempExtractionPath -ItemType Directory | Out-Null
+    }
+
+    Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractionPath
+
+    $finalInstallPath = Join-Path $installPath $installerName
+    if (Test-Path $finalInstallPath) {
+        Remove-Item -Path $finalInstallPath -Force -Recurse
+    }
+    New-Item -Path $finalInstallPath -ItemType Directory | Out-Null
+
+    Move-Item -Path "$tempExtractionPath\*" -Destination $finalInstallPath -Force
+
+    Remove-Item -Path $tempZipPath -Force
+    Remove-Item -Path $tempExtractionPath -Force -Recurse
+
+    Write-Host "Installation completed successfully."
+}
+
+function Install-MsiPackage {
+    param (
+        [string]$Url,
+        [string]$installPath,
+        [string]$installerName,
+        [bool]$hasAccess
+    )
+
+    $tempMsiPath = Join-Path $env:TEMP "$installerName.msi"
+    Invoke-WebRequest -Uri $Url -OutFile $tempMsiPath
+
+    $logPath = Join-Path $env:TEMP "$installerName-install.log"
+    $msiExecArgs = "/i `"$tempMsiPath`" INSTALL_ROOT=`"$installPath`" /qb /l*v `"$logPath`""
+
+    if ($hasAccess) {
+        Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList $msiExecArgs
     }
     else {
-        # If no username is provided, use the LOCALAPPDATA of the currently logged-in user
-        $installPath = "$env:LOCALAPPDATA"
+        Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList $msiExecArgs -Verb RunAs
+    }
+
+    if (Test-Path $logPath) {
+        Write-Host "Installation log created at $logPath"
+    }
+
+    Remove-Item -Path $tempMsiPath -Force
+
+    Write-Host "Installation completed successfully."
+}
+
+
+# Set default installPath if not provided
+if (-not $installPath) {
+    $installPath = "$env:LOCALAPPDATA"
+    if ($user) {
+        $UserProfilePath = "C:\Users\$user"
+        $installPath = Join-Path -Path $UserProfilePath -ChildPath "AppData\Local"
     }
 }
 Write-Verbose "installPath = $installPath"
 
-$installerName = "sensing-dev"
-$installerPostfixName = "-no-opencv"
-if ($InstallOpenCV) {
-    $installerPostfixName = ""
-}
-else {
-    $installerPostfixName = "-no-opencv"
-}
+$hasAccess = Test-WritePermission($installPath, $user)
 
-if (-not $Url ) {
-    if (-not $version ) {
-        $repoUrl = "https://api.github.com/repos/Sensing-Dev/sensing-dev-installer/releases/latest"
-        $response = Invoke-RestMethod -Uri $repoUrl
-        $version = $response.tag_name
-        Write-Verbose "Latest version: $version" 
+$installerName = "sensing-dev"
+$installerPostfixName = if ($InstallOpenCV) { "" } else { "-no-opencv" }
+
+# Construct download URL if not provided
+if (-not $Url) {
+    $baseUrl = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/"
+
+    if (-not $version) {
+        $version = Get-LatestVersion
     }
+
     if ($version -match 'v(\d+\.\d+\.\d+)(-\w+)?') {
         $versionNum = $matches[1] 
         Write-Output "Installing version: $version" 
     }
-    $baseUrl = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${version}/${installerName}${installerPostfixName}-${versionNum}-win64"
-    $zipUrl = "${baseUrl}.zip"
-    $msiUrl = "${baseUrl}.msi"
 
-    if ($user) {
-        $Url = "$zipUrl"
-    }
-    else {
-        $Url = "$msiUrl"
-    }   
-
+    $downloadBase = "${baseUrl}${version}/${installerName}${installerPostfixName}-${versionNum}-win64"
+    $Url = if ($user) { "${downloadBase}.zip" } else { "${downloadBase}.msi" }
     Write-Host "URL : $Url"
 }
 
-if ($Url.EndsWith("zip")) {
-    # Download ZIP to a temp location
-
-    $tempZipPath = "${env:TEMP}\${installerName}.zip"
-    Invoke-WebRequest -Uri $Url -OutFile $tempZipPath -Verbose
-
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-    $tempExtractionPath = "$installPath\_tempExtraction"
-    # Create the temporary extraction directory if it doesn't exist
-    if (-not (Test-Path $tempExtractionPath)) {
-        New-Item -Path $tempExtractionPath -ItemType Directory
-    }
-    # Attempt to extract to the temporary extraction directory
-    try {
-        Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractionPath 
-        Start-Sleep -Seconds 5
-        Get-ChildItem -Path $tempExtractionPath
-        # If extraction is successful, replace the old contents with the new
-        $installPath = "$installPath\$installerName"
-        if (Test-Path -Path ${installPath}) {
-            Get-ChildItem -Path $installPath -Recurse | Remove-Item -Force -Recurse
-        }
-        else {
-            New-Item -Path $installPath -ItemType Directory
-        }
-        Move-Item -Path "$tempExtractionPath\${installerName}${installerPostfixName}-${versionNum}-win64\*" -Destination $installPath -Force
-        
-        # Cleanup the temporary extraction directory
-        Remove-Item -Path $tempExtractionPath -Force -Recurse
-    }
-    catch {
-        Write-Error "Extraction failed. Original contents remain unchanged."
-        # Optional: Cleanup the temporary extraction directory
-        Remove-Item -Path $tempExtractionPath -Force -Recurse
-    }    
-    # Optionally delete the ZIP file after extraction
-    Remove-Item -Path $tempZipPath -Force
+# Check if the URL ends with .zip or .msi and call the respective function
+if ($url.EndsWith("zip")) {
+    Install-ZipPackage -Url $url -installPath $installPath -installerName $installerName -versionNum $versionNum
 }
-elseif ($Url.EndsWith("msi")) {
-    $installPath = "$installPath\$installerName"
-
-    # Download MSI to a temp location
-    $tempMsiPath = "${env:TEMP}\${installerName}.msi"
-    Invoke-WebRequest -Uri $Url -OutFile $tempMsiPath -Verbose
-
-    $log = "${env:TEMP}\${installerName}__install.log"
-    Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList "/i ${tempMsiPath} INSTALL_ROOT=${installPath} /qb /l*v ${log}" -Verb RunAs
-
-    # Check if the process started and finished successfully
-    if ($?) {
-        Write-Host "${installerName} installed at ${installPath}. See detailed log here ${log} "
-    }
-    else {
-        Write-Error "The ${installerName} installation encountered an error. See detailed log here ${log}"        
-    }
-    # Optionally delete the MSI file after extraction
-    Remove-Item -Path $tempMsiPath -Force
+elseif ($url.EndsWith("msi")) {
+    Install-MsiPackage -Url $url -installPath $installPath -installerName $installerName -hasAccess $hasAccess
 }
 else {
-    Write-Error "Invalid Url"
+    Write-Error "Unsupported installer format."
 }
 
 if (Test-Path -Path ${installPath}) {
