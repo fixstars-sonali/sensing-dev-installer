@@ -43,7 +43,8 @@ param(
   [string]$user,
   [string]$Url,
   [string]$installPath,
-  [switch]$InstallOpenCV = $false 
+  [switch]$InstallOpenCV = $false,
+  [string]$LocalInstaller
 )
 
 function Test-WritePermission {
@@ -124,8 +125,14 @@ function Install-ZIP(){
     Write-Host " Start Installation Zip $script:Date" -ForegroundColor Green
   }
   process {
-    $tempZipPath = "${env:TEMP}\${installerName}.zip"
-    Invoke-WebRequest -Uri $script:Url -OutFile $tempZipPath -Verbose
+    if(-not $LocalInstaller)
+    {
+      $tempZipPath = "${env:TEMP}\${installerName}.zip"
+      Invoke-WebRequest -Uri $script:Url -OutFile $tempZipPath -Verbose
+    }
+    else{
+      $tempZipPath = $LocalInstaller
+    }
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
 
@@ -195,8 +202,14 @@ function Install-MSI(){
     $installPath = "$installPath\$installerName"
 
     # Download MSI to a temp location
-    $tempMsiPath = "${env:TEMP}\${installerName}.msi"
-    Invoke-WebRequest -Uri $script:Url -OutFile $tempMsiPath -Verbose
+    if(-not $LocalInstaller){
+
+      $tempMsiPath = "${env:TEMP}\${installerName}.msi"
+      Invoke-WebRequest -Uri $script:Url -OutFile $tempMsiPath -Verbose
+    }
+    else{
+      $tempMsiPath = $LocalInstaller
+    }
 
     $log = "${env:TEMP}\${installerName}__install.log"
     $hasAccess = Test-WritePermission -user $user -path $installPath
@@ -283,7 +296,7 @@ function Invoke-Script {
     $installerPostfixName = if ($InstallOpenCV) { "-no-opencv" } else { "" }
     $script:Url = $Url
     # Construct download URL if not provided
-    if (-not $Url) {
+    if (-not $Url and -not $LocalInstaller) {
       $baseUrl = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/"
     
       if (-not $version) {
@@ -304,10 +317,10 @@ function Invoke-Script {
     }
 
     # Check if the URL ends with .zip or .msi and call the respective function
-    if ($Url.EndsWith("zip")) {      
+    if ($Url.EndsWith("zip") -or $LocalInstaller.EndsWith("zip")) {      
       Install-ZIP -installPath $installPath  -installerName $installerName -installerPostfixName $installerPostfixName -versionNum $versionNum  
     }
-    elseif ($Url.EndsWith("msi")) {
+    elseif ($Url.EndsWith("msi") -or $LocalInstaller.EndsWith("msi") ) {
       Install-MSI -installPath $installPath -installerName $installerName 
     }
     else {

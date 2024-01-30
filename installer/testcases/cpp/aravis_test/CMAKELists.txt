@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.0)
+project(aravis-test)
+
+set(CMAKE_CXX_STANDARD 17)
+
+set(SENSING_DEV_DIR $ENV{SENSING_DEV_ROOT})
+
+# aravis
+include_directories(${SENSING_DEV_DIR}/include/aravis-0.8)
+include_directories(${SENSING_DEV_DIR}/include/glib-2.0)
+include_directories(${SENSING_DEV_DIR}/include/glib-2.0/include)
+link_directories(${SENSING_DEV_DIR}/bin)
+link_directories(${SENSING_DEV_DIR}/lib)
+
+set(TEST aravis_test.cpp)
+add_executable(aravis_test ${TEST})
+target_compile_features(aravis_test PUBLIC cxx_std_17)
+target_link_libraries(aravis_test PRIVATE aravis-0.8.lib)
+target_link_libraries(aravis_test PRIVATE gobject-2.0.lib)
