@@ -11,7 +11,6 @@ on:
         default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] '
 
 
-
 jobs:
   test-installer-script:   
     strategy:
@@ -20,9 +19,9 @@ jobs:
         options: ${{ fromJson(github.event.inputs.options) }}
         exclude:
           - version: "v23.11.01"
-            options: ["-user $env:USERNAME -InstallOpenCV"]
+            options: "-user $env:USERNAME -InstallOpenCV"
           - version: "v23.11.01"
-            options: ["-InstallOpenCV"]
+            options: "-InstallOpenCV"
 
     runs-on: windows-latest
     env:
