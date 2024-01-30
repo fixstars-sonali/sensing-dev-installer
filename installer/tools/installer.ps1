@@ -294,7 +294,10 @@ function Invoke-Script {
         $versionNum = $matches[1] 
         Write-Output "Installing version: $version" 
       }
-    
+      if ($versionNum -lt "24.01.01") {
+        Write-Output "InstallOpenCV option is unsupported for this version. Please update the installer.ps1"
+        $installerPostfixName = ""
+      }
       $downloadBase = "${baseUrl}${version}/${installerName}${installerPostfixName}-${versionNum}-win64"
       $script:Url = if ($user) { "${downloadBase}.zip" } else { "${downloadBase}.msi" }
       Write-Host "URL : $Url"
