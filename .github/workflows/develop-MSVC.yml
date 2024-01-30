@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.artifact-matrix }}
     
     steps:
       - name: Setup Python
@@ -58,13 +60,6 @@ jobs:
         working-directory: installer/build
         run: cpack -G "WIX"
 
-      - name: Upload artifacts MSI
-        uses: actions/upload-artifact@v2
-        with:
-          name: sensing-dev-installer-msi
-          path: |
-            installer/build/*.msi
-
       - name: Create package zip
         working-directory: installer/build
         run: cpack -G "ZIP"
@@ -81,24 +76,39 @@ jobs:
         working-directory: installer/build
         run: cpack -G "ZIP"
 
+      - name: Find and save names of ZIP and MSI files
+        run: |
+          Get-ChildItem -Recurse -Include *.zip, *.msi | Select-Object -ExpandProperty FullName > artifact_list.txt
+
+      - name: Create JSON matrix
+        id: set-matrix
+        run: |
+          $ARTIFACTS = Get-Content -Path artifacts.txt
+          $JSON_FMT = '{"include":['
+          foreach ($ARTIFACT in $ARTIFACTS.Split(',')) {
+            $JSON_FMT += '{"name":"' + $ARTIFACT + '"},'
+          }
+          $JSON_FMT = $JSON_FMT.TrimEnd(',') # Remove trailing comma
+          $JSON_FMT += ']}'
+          echo "::set-output name=artifact-matrix::$JSON_FMT"
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.3
         with:
-          name: sensing-dev-installer-zip
+          name: sensing-dev-installer
           path: |
             installer/build/*.zip
+            installer/build/*.msi
+            artifact_list.txt
 
-      
-            
+
   test-script:
     needs: build
     strategy:
       matrix:
         version: ["v24.01.02"]
         options: ["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] 
-        exclude:
-          - version: "v23.11.01"
-            options: ["-user $env:USERNAME -InstallOpenCV", "-InstallOpenCV"]
+       
 
     runs-on: windows-latest
     env:
@@ -109,6 +119,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: sensing-dev-installer
 
       - name: Test help
         working-directory: installer\tools
