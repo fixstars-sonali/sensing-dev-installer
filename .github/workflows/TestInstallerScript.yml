@@ -5,10 +5,11 @@ on:
     inputs:
       versions:
         description: 'List of versions to test'
-        default: '["v24.01.01","v23.11.01"]'
+        default: '["v24.01.01"]'
+        # default: '["v24.01.01","v23.11.01"]'
       options:
         description: 'List of script options to test'
-        default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] '
+        default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
 
 
 jobs:
@@ -134,12 +135,45 @@ jobs:
         $env:PATH="$env:PATH;$PATH"
         & arv-tool-0.8.exe
 
+    - name: Test aravis_test cpp
+      working-directory: installer\testcases\cpp\aravis_test
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+        cd Release
+        & aravis_test.exe
+
+    - name: Test ionkit_test cpp
+      working-directory: installer\testcases\cpp\ionkit_test
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+        cd Release
+        & ionkit_test.exe
+
+    - name: Test opencv_test cpp
+      working-directory: installer\testcases\cpp\opencv_test
+      if: contains(matrix.options, '-InstallOpenCV')
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+        cd Release
+        & opencv_test.exe
+
     - name: Uninstallation
       working-directory: installer\tools
       run: |
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
         $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
         Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
+
+
 
 
 
