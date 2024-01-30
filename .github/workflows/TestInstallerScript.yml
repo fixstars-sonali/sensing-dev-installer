@@ -5,7 +5,7 @@ on:
     inputs:
       versions:
         description: 'List of versions to test'
-        default: '["v23.11.01", "v24.01.01"]'
+        default: '["v24.01.01","v23.11.01"]'
       options:
         description: 'List of script options to test'
         default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"] '
