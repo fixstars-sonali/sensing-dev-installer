@@ -20,7 +20,9 @@ jobs:
         options: ${{ fromJson(github.event.inputs.options) }}
         exclude:
           - version: "v23.11.01"
-            options: ["-user $env:USERNAME -InstallOpenCV", "-InstallOpenCV"]
+            options: ["-user $env:USERNAME -InstallOpenCV"]
+          - version: "v23.11.01"
+            options: ["-InstallOpenCV"]
 
     runs-on: windows-latest
     env:
