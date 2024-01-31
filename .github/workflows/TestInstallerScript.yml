@@ -140,6 +140,9 @@ jobs:
     - name: Test aravis_test cpp
       working-directory: installer\testcases\cpp\aravis_test
       run: |
+        $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+        Write-Host PATH = $PATH        
+        $env:PATH="$env:PATH;$PATH"
         mkdir build
         cd build
         cmake ..
@@ -150,6 +153,9 @@ jobs:
     # - name: Test ionkit_test cpp
     #   working-directory: installer\testcases\cpp\ionkit_test
     #   run: |
+          # $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          # Write-Host PATH = $PATH        
+          # $env:PATH="$env:PATH;$PATH"
     #     mkdir build
     #     cd build
     #     cmake ..
@@ -161,6 +167,9 @@ jobs:
       working-directory: installer\testcases\cpp\opencv_test
       if: contains(matrix.options, '-InstallOpenCV')
       run: |
+        $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+        Write-Host PATH = $PATH        
+        $env:PATH="$env:PATH;$PATH"
         mkdir build
         cd build
         cmake ..
