@@ -137,15 +137,15 @@ jobs:
         $env:PATH="$env:PATH;$PATH"
         & arv-tool-0.8.exe
 
-    # - name: Test aravis_test cpp
-    #   working-directory: installer\testcases\cpp\aravis_test
-    #   run: |
-    #     mkdir build
-    #     cd build
-    #     cmake ..
-    #     cmake --build . --config Release
-    #     cd Release
-    #     & aravis_test.exe
+    - name: Test aravis_test cpp
+      working-directory: installer\testcases\cpp\aravis_test
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+        cd Release
+        & aravis_test.exe
 
     # - name: Test ionkit_test cpp
     #   working-directory: installer\testcases\cpp\ionkit_test
@@ -157,16 +157,16 @@ jobs:
     #     cd Release
     #     & ionkit_test.exe
 
-    # - name: Test opencv_test cpp
-    #   working-directory: installer\testcases\cpp\opencv_test
-    #   if: contains(matrix.options, '-InstallOpenCV')
-    #   run: |
-    #     mkdir build
-    #     cd build
-    #     cmake ..
-    #     cmake --build . --config Release
-    #     cd Release
-    #     & opencv_test.exe
+    - name: Test opencv_test cpp
+      working-directory: installer\testcases\cpp\opencv_test
+      if: contains(matrix.options, '-InstallOpenCV')
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+        cd Release
+        & opencv_test.exe
 
     - name: Uninstallation
       working-directory: build
