@@ -296,7 +296,7 @@ function Invoke-Script {
     $installerPostfixName = if ($InstallOpenCV) { "-no-opencv" } else { "" }
     $script:Url = $Url
     # Construct download URL if not provided
-    if (-not $Url and -not $LocalInstaller) {
+    if (-not $Url -and -not $LocalInstaller) {
       $baseUrl = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/"
     
       if (-not $version) {
