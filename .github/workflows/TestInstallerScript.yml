@@ -166,7 +166,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          
+
       - name: Download installer
         working-directory: build
         run: |
@@ -216,6 +216,10 @@ jobs:
       - name: run ${{ matrix.tests}} cpp
         working-directory: installer\testcases\cpp\${{ matrix.tests}}\build
         run: |
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH        
+          $env:PATH="$env:PATH;$PATH"
+
           cd Release
           Get-ChildItem
           .\${{ matrix.tests}}.exe
