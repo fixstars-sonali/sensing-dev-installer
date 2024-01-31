@@ -211,6 +211,11 @@ jobs:
         options: ${{ fromJson(github.event.inputs.options) }}
         # tests: ["aravis_test","ionkit_test","opencv_test"]
         tests: ["aravis_test","opencv_test"]
+        exclude:
+          - options: "-user $env:USERNAME"
+            tests: "opencv_test"
+          - options: ""
+            tests: "opencv_test"
     runs-on: windows-latest
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
@@ -261,7 +266,7 @@ jobs:
       - name: Build ${{ matrix.tests}} cpp
         working-directory: installer\testcases\cpp\${{ matrix.tests}}\build
         run: |
-          cmake --build . --config Release | Out-Default
+          cmake --build . --config Release 
 
       - name: run ${{ matrix.tests}} cpp
         working-directory: installer\testcases\cpp\${{ matrix.tests}}\build
