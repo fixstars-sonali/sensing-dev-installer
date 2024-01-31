@@ -43,100 +43,111 @@ param(
   [string]$user,
   [string]$Url,
   [string]$installPath,
-  [switch]$InstallOpenCV = $false 
+  [switch]$InstallOpenCV = $false,
+  [string]$LocalInstaller
 )
 
-# Function to check for write permission for a given user
 function Test-WritePermission {
   param (
     [string]$path,
-    [string]$user = "$env:USERNAME"
+    [string]$user = $env:USERNAME
   )
-
+  if (-not $user) {
+    $user = $env:USERNAME
+  }
+  $user = "$env:USERDOMAIN\$user"
   $writeAllowed = $false
   $acl = Get-Acl $path
   $securityIdentifier = New-Object System.Security.Principal.NTAccount($user)
-  $acl.Access | ForEach-Object {
-    if ($_.IdentityReference -eq $securityIdentifier) {
-      if ($_.FileSystemRights -match "Write" -and $_.AccessControlType -eq "Allow") {
+
+  foreach ($access in $acl.Access) {
+    if ($access.IdentityReference -eq $securityIdentifier) {
+      if (
+        ( 
+          $access.FileSystemRights -match "Write" -or 
+          $access.FileSystemRights -match "FullControl"
+        ) -and 
+        $access.AccessControlType -eq "Allow") {
+        Write-Host "$user has write permission for $path"
         $writeAllowed = $true
-        Write-Host "User $userName has write permission in $path"
+        break
       }
     }
   }
+
+  if (-not $writeAllowed) {
+    Write-Host "$user needs write permission for $path"
+  }
+
   return $writeAllowed
 }
 
-# Check if the MSI URL and Install Path are provided
-if ( -not $installPath) {
+function Get-LatestVersion {
+  [CmdletBinding()]
+  param (
+    [string]$Repository = "Sensing-Dev/sensing-dev-installer"
+  )
 
-  if ($user) {
-    # If a username is provided, get that user's LOCALAPPDATA path
-    $UserProfilePath = "C:\Users\$user"
-    $installPath = Join-Path -Path $UserProfilePath -ChildPath "AppData\Local"
-  }
-  else {
-    # If no username is provided, use the LOCALAPPDATA of the currently logged-in user
-    $installPath = "$env:LOCALAPPDATA"
-  }
-}
-Write-Verbose "installPath = $installPath"
+  $RepoApiUrl = "https://api.github.com/repos/$Repository/releases/latest"
 
-$installerName = "sensing-dev"
-$installerPostfixName = "-no-opencv"
-if ($InstallOpenCV) {
-  $installerPostfixName = ""
-}
-else {
-  $installerPostfixName = "-no-opencv"
-}
-
-if (-not $Url ) {
-  if (-not $version ) {
-    $repoUrl = "https://api.github.com/repos/Sensing-Dev/sensing-dev-installer/releases/latest"
-    $response = Invoke-RestMethod -Uri $repoUrl
-    $version = $response.tag_name
-    Write-Verbose "Latest version: $version" 
-  }
-  if ($version -match 'v(\d+\.\d+\.\d+)(-\w+)?') {
-    $versionNum = $matches[1] 
-    Write-Output "Installing version: $version" 
-  }
-  $baseUrl = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${version}/${installerName}${installerPostfixName}-${versionNum}-win64"
-  $zipUrl = "${baseUrl}.zip"
-  $msiUrl = "${baseUrl}.msi"
-
-  if ($user) {
-    $Url = "$zipUrl"
-  }
-  else {
-    $Url = "$msiUrl"
-  }   
-
-  Write-Host "URL : $Url"
-}
-
-if ($Url.EndsWith("zip")) {
-  # Download ZIP to a temp location
-
-  $tempZipPath = "${env:TEMP}\${installerName}.zip"
-  Invoke-WebRequest -Uri $Url -OutFile $tempZipPath -Verbose
-
-  Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-  $tempExtractionPath = "$installPath\_tempExtraction"
-  # Create the temporary extraction directory if it doesn't exist
-  if (-not (Test-Path $tempExtractionPath)) {
-    New-Item -Path $tempExtractionPath -ItemType Directory
-  }
-  # Attempt to extract to the temporary extraction directory
   try {
-    Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractionPath 
-    Start-Sleep -Seconds 5
-    Get-ChildItem -Path $tempExtractionPath
-    # If extraction is successful, replace the old contents with the new
-    if (Test-WritePermission($installPath, $user)) {
-      $installPath = "$installPath\$installerName"        
+    $response = Invoke-RestMethod -Uri $RepoApiUrl -Headers @{Accept = "application/vnd.github.v3+json" }
+    $latestVersion = $response.tag_name
+
+    if ($latestVersion) {
+      Write-Output $latestVersion
+    }
+    else {
+      Write-Error "Latest version not found."
+      exit 1
+    }
+  }
+  catch {
+    Write-Error "Error fetching the latest version: $_"
+    exit 1
+  }
+}
+
+function Install-ZIP(){
+  param (
+    [string] $installPath,
+    [string] $installerName,
+    [string] $installerPostfixName,
+    [string] $versionNum,
+    # exit code
+    [Parameter(Mandatory = $false)]
+    [int32] $ProcessExit = 0
+  )
+  begin {
+    # Clear-Host
+    $script:Date = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
+    Write-Host "--------------------------------------" -ForegroundColor Green
+    Write-Host " Start Installation Zip $script:Date" -ForegroundColor Green
+  }
+  process {
+    if(-not $LocalInstaller)
+    {
+      $tempZipPath = "${env:TEMP}\${installerName}.zip"
+      Invoke-WebRequest -Uri $script:Url -OutFile $tempZipPath -Verbose
+    }
+    else{
+      $tempZipPath = $LocalInstaller
+    }
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $tempExtractionPath = "$installPath\_tempExtraction"
+    # Create the temporary extraction directory if it doesn't exist
+    if (-not (Test-Path $tempExtractionPath)) {
+     New-Item -Path $tempExtractionPath -ItemType Directory
+    }
+    # Attempt to extract to the temporary extraction directory
+    try {
+      Expand-Archive -Path $tempZipPath -DestinationPath $tempExtractionPath 
+      Start-Sleep -Seconds 5
+      Get-ChildItem -Path $tempExtractionPath
+      # If extraction is successful, replace the old contents with the new
+      $installPath = "$installPath\$installerName"
       if (Test-Path -Path ${installPath}) {
         Get-ChildItem -Path $installPath -Recurse | Remove-Item -Force -Recurse
       }
@@ -144,56 +155,195 @@ if ($Url.EndsWith("zip")) {
         New-Item -Path $installPath -ItemType Directory
       }
       Move-Item -Path "$tempExtractionPath\${installerName}${installerPostfixName}-${versionNum}-win64\*" -Destination $installPath -Force
-        
+
       # Cleanup the temporary extraction directory
       Remove-Item -Path $tempExtractionPath -Force -Recurse
     }
+    catch {
+      $ProcessExit = 1      
+    }    
+    # Optionally delete the ZIP file after extraction
+    Remove-Item -Path $tempZipPath -Force
   }
-  catch {
-    Write-Error "Extraction failed. Original contents remain unchanged."
-    # Optional: Cleanup the temporary extraction directory
-    Remove-Item -Path $tempExtractionPath -Force -Recurse
-  }    
-  # Optionally delete the ZIP file after extraction
-  Remove-Item -Path $tempZipPath -Force
+  end {
+
+    if ($ProcessExit -eq 0) {
+        Write-Host " Success installing Zip  at $script:Date" -ForegroundColor Green
+        Write-Host "--------------------------------------" -ForegroundColor Green
+    }
+    else {
+        # Optional: Cleanup the temporary extraction directory
+        Remove-Item -Path $tempExtractionPath -Force -Recurse
+        Write-Error "Extraction failed. Original contents remain unchanged."
+        Write-Error " $ProcessExit Failed installing Zip  at $script:Date"
+        Write-Host "--------------------------------------" -ForegroundColor Green
+        exit $ProcessExit
+    }
+    return $ProcessExit
+  }
 }
-elseif ($Url.EndsWith("msi")) {
-  $installPath = "$installPath\$installerName"
 
-  Test-WritePermission($installPath)
+function Install-MSI(){
+  param (
+    [string] $installPath,
+    [string] $installerName,
+    # exit code
+    [Parameter(Mandatory = $false)]
+    [int32] $ProcessExit = 0
+  )
+  begin {
+    # Clear-Host
+    $script:Date = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
+    Write-Host "--------------------------------------" -ForegroundColor Green
+    Write-Host " Start Installation MSI $script:Date" -ForegroundColor Green
+  }
+  process {
 
-  # Download MSI to a temp location
-  $tempMsiPath = "${env:TEMP}\${installerName}.msi"
-  Invoke-WebRequest -Uri $Url -OutFile $tempMsiPath -Verbose
+    $installPath = "$installPath\$installerName"
 
-  $log = "${env:TEMP}\${installerName}__install.log"
-  Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList "/i ${tempMsiPath} INSTALL_ROOT=${installPath} /qb /l*v ${log}" -Verb RunAs
+    # Download MSI to a temp location
+    if(-not $LocalInstaller){
+
+      $tempMsiPath = "${env:TEMP}\${installerName}.msi"
+      Invoke-WebRequest -Uri $script:Url -OutFile $tempMsiPath -Verbose
+    }
+    else{
+      $tempMsiPath = $LocalInstaller
+    }
+
+    $log = "${env:TEMP}\${installerName}__install.log"
+    $hasAccess = Test-WritePermission -user $user -path $installPath
+
+    if($hasAccess){
+      Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList "/i ${tempMsiPath} INSTALL_ROOT=${installPath} /qb /l*v ${log}" 
+    }
+    else {
+      Start-Process -Wait -FilePath "msiexec.exe" -ArgumentList "/i ${tempMsiPath} INSTALL_ROOT=${installPath} /qb /l*v ${log}" -Verb RunAs
+    }
 
   # Check if the process started and finished successfully
-  if ($?) {
-    Write-Host "${installerName} installed at ${installPath}. See detailed log here ${log} "
+    if ($?) {
+      Write-Host "${installerName} installed at ${installPath}. See detailed log here ${log} "
+    }
+    else {
+      $ProcessExit = 1         
+    }
+    # Optionally delete the MSI file after extraction
+    Remove-Item -Path $tempMsiPath -Force
   }
-  else {
-    Write-Error "The ${installerName} installation encountered an error. See detailed log here ${log}"        
+  end {
+
+    if ($ProcessExit -eq 0) {
+        Write-Host " Success installing MSI  at $script:Date" -ForegroundColor Green
+        Write-Host "--------------------------------------" -ForegroundColor Green
+    }
+    else {
+        Write-Error "The ${installerName} installation encountered an error. See detailed log here ${log}"     
+        Write-Error " $BuildExit Failed installing MSI  at $script:Date"
+        Write-Host "--------------------------------------" -ForegroundColor Green
+        exit $ProcessExit
+    }
+    return $ProcessExit
   }
-  # Optionally delete the MSI file after extraction
-  Remove-Item -Path $tempMsiPath -Force
-}
-else {
-  Write-Error "Invalid Url"
 }
 
-if (Test-Path -Path ${installPath}) {
-  $relativeScriptPath = "tools\Env.ps1"
-  # Run the .ps1 file from the installed package
-  $ps1ScriptPath = Join-Path -Path $installPath -ChildPath $relativeScriptPath
-  Write-Verbose "ps1ScriptPath = $ps1ScriptPath"
-  if (Test-Path -Path $ps1ScriptPath -PathType Leaf) {
-    & $ps1ScriptPath
-  }
-  else {
-    Write-Error "Script at $relativeScriptPath not found in the installation path!"
+function Set-InstallerEnvironment(){
+  param (
+    [string] $installPath,
+    [string] $installerName
+  )
+  $installPath
+  if (Test-Path -Path ${installPath}) {
+    $relativeScriptPath = "tools\Env.ps1"
+    # Run the .ps1 file from the installed package
+    $ps1ScriptPath = Join-Path -Path $installPath\$installerName -ChildPath $relativeScriptPath
+    Write-Host "ps1ScriptPath = $ps1ScriptPath"
+    if (Test-Path -Path $ps1ScriptPath -PathType Leaf) {
+      & $ps1ScriptPath
+    }
+    else {
+      Write-Error "Script at $relativeScriptPath not found in the installation path!"
+      exit 1
+    }
   }
 }
+
+function Invoke-Script {
+  param(
+        # exit code
+        [Parameter(Mandatory = $false)]
+        [int32] $ProcessExit = 0
+  )
+
+  begin {
+      # Clear-Host
+      $script:Date = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
+      Write-Host "--------------------------------------" -ForegroundColor Green
+      Write-Host " Start Installation  $script:Date" -ForegroundColor Green
+  }
+  process {
+    
+    # Set default installPath if not provided
+    if (-not $installPath) {
+      $installPath = "$env:LOCALAPPDATA"
+      if ($user) {
+        $UserProfilePath = "C:\Users\$user"
+        $installPath = Join-Path -Path $UserProfilePath -ChildPath "AppData\Local"
+      }
+    }
+    Write-Verbose "installPath = $installPath"
+    $installerName = "sensing-dev"
+    $installerPostfixName = if ($InstallOpenCV) { "-no-opencv" } else { "" }
+    $script:Url = $Url
+    # Construct download URL if not provided
+    if (-not $Url -and -not $LocalInstaller) {
+      $baseUrl = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/"
+    
+      if (-not $version) {
+        $version = Get-LatestVersion
+      }
+    
+      if ($version -match 'v(\d+\.\d+\.\d+)(-\w+)?') {
+        $versionNum = $matches[1] 
+        Write-Output "Installing version: $version" 
+      }
+      if ($versionNum -lt "24.01.01") {
+        Write-Output "InstallOpenCV option is unsupported for this version. Please update the installer.ps1"
+        $installerPostfixName = ""
+      }
+      $downloadBase = "${baseUrl}${version}/${installerName}${installerPostfixName}-${versionNum}-win64"
+      $script:Url = if ($user) { "${downloadBase}.zip" } else { "${downloadBase}.msi" }
+      Write-Host "URL : $Url"
+    }
+
+    # Check if the URL ends with .zip or .msi and call the respective function
+    if ($Url.EndsWith("zip") -or $LocalInstaller.EndsWith("zip")) {      
+      Install-ZIP -installPath $installPath  -installerName $installerName -installerPostfixName $installerPostfixName -versionNum $versionNum  
+    }
+    elseif ($Url.EndsWith("msi") -or $LocalInstaller.EndsWith("msi") ) {
+      Install-MSI -installPath $installPath -installerName $installerName 
+    }
+    else {
+      Write-Error "Unsupported installer format."
+      $ProcessExit = 1
+    }
+    Set-InstallerEnvironment -installPath $installPath -installerName $installerName
+  }
+  end{
+    if ($ProcessExit -eq 0) {
+      Write-Host " Installation Success at $script:Date" -ForegroundColor Green
+      Write-Host "--------------------------------------" -ForegroundColor Green
+    }
+    else {
+        Write-Error " Installation Failed at $script:Date"
+        Write-Host "--------------------------------------" -ForegroundColor Green
+    }
+    exit $ProcessExit
+  }
+}
+
+#--------------------------------------------------------------
+
+Invoke-Script
 
 

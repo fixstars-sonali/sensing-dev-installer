@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.0)
+project(opencv-test)
+
+set(CMAKE_CXX_STANDARD 17)
+
+set(SENSING_DEV_DIR $ENV{SENSING_DEV_ROOT})
+# set("OpenCV_DIR" ${SENSING_DEV_DIR})
+# find_package( OpenCV REQUIRED )
+
+# aravis
+include_directories(${SENSING_DEV_DIR}/include)
+link_directories(${SENSING_DEV_DIR}/bin)
+link_directories(${SENSING_DEV_DIR}/lib)
+
+set(TEST opencv_test.cpp)
+add_executable(opencv_test ${TEST})
+target_compile_features(opencv_test PUBLIC cxx_std_17)
+
+target_link_libraries(opencv_test PRIVATE opencv_world455.lib)
+# target_link_libraries(opencv_test PRIVATE ${OpenCV_LIBS})
