@@ -154,8 +154,8 @@ jobs:
        
         mkdir build
         cd build
-        cmake ..
-        cmake --build . --config Release
+        cmake .. | Out-Default
+        cmake --build . --config Release | Out-Default
 
         cd Release
         Get-ChildItem
