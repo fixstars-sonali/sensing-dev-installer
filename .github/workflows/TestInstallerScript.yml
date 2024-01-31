@@ -148,7 +148,8 @@ jobs:
         cmake ..
         cmake --build . --config Release
         cd Release
-        & aravis_test.exe
+        Get-ChildItems
+        .\aravis_test.exe
 
     # - name: Test ionkit_test cpp
     #   working-directory: installer\testcases\cpp\ionkit_test
