@@ -156,8 +156,9 @@ jobs:
         cd build
         cmake ..
         cmake --build . --config Release
+
         cd Release
-        Get-ChildItems
+        Get-ChildItem
         .\aravis_test.exe
 
     # - name: Test ionkit_test cpp
