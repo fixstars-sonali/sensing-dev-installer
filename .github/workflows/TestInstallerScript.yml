@@ -137,29 +137,29 @@ jobs:
         $env:PATH="$env:PATH;$PATH"
         & arv-tool-0.8.exe
 
-    - name: Test aravis_test cpp
-      working-directory: installer\testcases\cpp\aravis_test
-      run: |
-        $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-        Write-Host PATH = $PATH        
-        $env:PATH="$env:PATH;$PATH"
+    # - name: Test aravis_test cpp
+    #   working-directory: installer\testcases\cpp\aravis_test
+    #   run: |
+    #     $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+    #     Write-Host PATH = $PATH        
+    #     $env:PATH="$env:PATH;$PATH"
 
-        $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-        Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-        $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
+    #     $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+    #     Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+    #     $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
 
-        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-        $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+    #     $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+    #     Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+    #     $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
        
-        mkdir build
-        cd build
-        cmake .. | Out-Default
-        cmake --build . --config Release | Out-Default
+    #     mkdir build
+    #     cd build
+    #     cmake .. | Out-Default
+    #     cmake --build . --config Release | Out-Default
 
-        cd Release
-        Get-ChildItem
-        .\aravis_test.exe
+    #     cd Release
+    #     Get-ChildItem
+    #     .\aravis_test.exe
 
     # - name: Test ionkit_test cpp
     #   working-directory: installer\testcases\cpp\ionkit_test
@@ -174,28 +174,28 @@ jobs:
     #     cd Release
     #     & ionkit_test.exe
 
-    - name: Test opencv_test cpp
-      working-directory: installer\testcases\cpp\opencv_test
-      if: contains(matrix.options, '-InstallOpenCV')
-      run: |
-        $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-        Write-Host PATH = $PATH        
-        $env:PATH="$env:PATH;$PATH"
+    # - name: Test opencv_test cpp
+    #   working-directory: installer\testcases\cpp\opencv_test
+    #   if: contains(matrix.options, '-InstallOpenCV')
+    #   run: |
+    #     $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+    #     Write-Host PATH = $PATH        
+    #     $env:PATH="$env:PATH;$PATH"
         
-        $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-        Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-        $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
+    #     $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+    #     Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+    #     $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
 
-        $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-        Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-        $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+    #     $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+    #     Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+    #     $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
 
-        mkdir build
-        cd build
-        cmake ..
-        cmake --build . --config Release
-        cd Release
-        & opencv_test.exe
+    #     mkdir build
+    #     cd build
+    #     cmake ..
+    #     cmake --build . --config Release
+    #     cd Release
+    #     & opencv_test.exe
 
     - name: Uninstallation
       working-directory: build
@@ -203,6 +203,72 @@ jobs:
         $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
         $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
         Remove-Item "$env:SENSING_DEV_ROOT" -Recurse -Force
+
+  test-cpp:
+    strategy:
+      matrix:
+        version: ${{ fromJson(github.event.inputs.versions) }}
+        options: ${{ fromJson(github.event.inputs.options) }}
+        # tests: ["aravis_test","ionkit_test","opencv_test"]
+        tests: ["aravis_test","opencv_test"]
+    runs-on: windows-latest
+    env:
+      INSTALL_PATH: "$env:LOCALAPPDATA"
+      SDK_NAME : "sensing-dev"
+      VERSION : ${{ matrix.version }}
+    steps:  
+      - name: Download installer
+        working-directory: build
+        run: |
+          $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+          # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+          Invoke-WebRequest $url -OutFile .\installer.ps1
+
+      - name: Installation 
+        working-directory: build
+        run: |
+          Write-Host "USERNAME = $env:USERNAME"
+          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}   
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
+        with:
+          submodules: recursive
+
+      - name: Create and enter build directory
+        working-directory: installer\testcases\cpp\${{ matrix.tests}}
+        run: |
+          mkdir build
+          cd build
+
+      - name: Cmake Config ${{ matrix.tests}} cpp
+        working-directory: installer\testcases\cpp\${{ matrix.tests}}\build
+        run: |
+          $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host PATH = $PATH        
+          $env:PATH="$env:PATH;$PATH"
+
+          $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+          Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+          $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
+
+          $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+          Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+          $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+          
+          cmake .. 
+
+      - name: Build ${{ matrix.tests}} cpp
+        working-directory: installer\testcases\cpp\${{ matrix.tests}}\build
+        run: |
+          cmake --build . --config Release | Out-Default
+
+      - name: run ${{ matrix.tests}} cpp
+        working-directory: installer\testcases\cpp\${{ matrix.tests}}\build
+        run: |
+          cd Release
+          Get-ChildItem
+          .\${{ matrix.tests}}.exe
 
   # test-python:
   #     strategy:
