@@ -137,66 +137,6 @@ jobs:
         $env:PATH="$env:PATH;$PATH"
         & arv-tool-0.8.exe
 
-    # - name: Test aravis_test cpp
-    #   working-directory: installer\testcases\cpp\aravis_test
-    #   run: |
-    #     $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-    #     Write-Host PATH = $PATH        
-    #     $env:PATH="$env:PATH;$PATH"
-
-    #     $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-    #     Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-    #     $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
-
-    #     $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-    #     Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-    #     $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-       
-    #     mkdir build
-    #     cd build
-    #     cmake .. | Out-Default
-    #     cmake --build . --config Release | Out-Default
-
-    #     cd Release
-    #     Get-ChildItem
-    #     .\aravis_test.exe
-
-    # - name: Test ionkit_test cpp
-    #   working-directory: installer\testcases\cpp\ionkit_test
-    #   run: |
-          # $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-          # Write-Host PATH = $PATH        
-          # $env:PATH="$env:PATH;$PATH"
-    #     mkdir build
-    #     cd build
-    #     cmake ..
-    #     cmake --build . --config Release
-    #     cd Release
-    #     & ionkit_test.exe
-
-    # - name: Test opencv_test cpp
-    #   working-directory: installer\testcases\cpp\opencv_test
-    #   if: contains(matrix.options, '-InstallOpenCV')
-    #   run: |
-    #     $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-    #     Write-Host PATH = $PATH        
-    #     $env:PATH="$env:PATH;$PATH"
-        
-    #     $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-    #     Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-    #     $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
-
-    #     $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-    #     Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-    #     $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-
-    #     mkdir build
-    #     cd build
-    #     cmake ..
-    #     cmake --build . --config Release
-    #     cd Release
-    #     & opencv_test.exe
-
     - name: Uninstallation
       working-directory: build
       run: |
@@ -222,6 +162,11 @@ jobs:
       SDK_NAME : "sensing-dev"
       VERSION : ${{ matrix.version }}
     steps:  
+      - name: Create and enter build directory
+        run: |
+          mkdir build
+          cd build
+          
       - name: Download installer
         working-directory: build
         run: |
@@ -334,7 +279,7 @@ jobs:
 
   #           python .\aravis_test.py
 
-  #       - name: python aravis test
+  #       - name: python ionkit test
   #         working-directory: installer\testcases\python
   #         run: |
   #           $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
