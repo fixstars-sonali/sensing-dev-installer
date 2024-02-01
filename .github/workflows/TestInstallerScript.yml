@@ -5,8 +5,8 @@ on:
     inputs:
       versions:
         description: 'List of versions to test'
-        default: '["v24.01.01"]'
-        # default: '["v24.01.01","v23.11.01"]'
+        # default: '["v24.01.01"]'
+        default: '["v24.01.01","v23.11.01"]'
       options:
         description: 'List of script options to test'
         default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
@@ -224,72 +224,57 @@ jobs:
           Get-ChildItem
           .\${{ matrix.tests}}.exe
 
-  # test-python:
-  #     strategy:
-  #       matrix:
-  #         version: ${{ fromJson(github.event.inputs.versions) }}
-  #     runs-on: windows-latest
-  #     steps:      
-  #       - name: Setup Python
-  #         uses: actions/setup-python@v4.7.1
-  #         with:
-  #           python-version: ${{ env.PYTHON_VERSION }}
-  
-  #       - name: Install pip
-  #         run: python -m ensurepip --upgrade
-  
-  #       - name: pip testing
-  #         working-directory: build
-  #         run: |
-  #           pip3 install -U pip
-  #           pip3 install ion-python
-  #           pip3 install gendc-python==0.1.0 
-  #           pip install opencv-python
-  #           pip3 install numpy
-  
-  #       - name: Checkout repository
-  #         uses: actions/checkout@v4.1.1          
-        
-  #       - name: python opencv test
-  #         working-directory: installer\testcases\python
-  #         run: |
-  #           python .\opencv_test.py
+  test-python:
+      strategy:
+        matrix:
+          version: ${{ fromJson(github.event.inputs.versions) }}
+      env:
+        INSTALL_PATH: "$env:LOCALAPPDATA"
+        SDK_NAME : "sensing-dev"
+        VERSION : ${{ matrix.version }}
+      runs-on: windows-latest
+      steps: 
+        - name: Checkout repository
+          uses: actions/checkout@v4.1.1  
 
-  #       - name: Download installer
-  #         run: |
-  #           $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
-  #           # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-  #           powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }}
+        - name: Setup Python
+          uses: actions/setup-python@v4.7.1
+          with:
+            python-version: ${{ env.PYTHON_VERSION }}
 
-  #           $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
-  #           Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
-  #           $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH}
+        - name: Install pip
+          run: python -m pip install --upgrade pip
+  
+        - name: Install dependencies
+          working-directory: installer\testcases\python
+          run: pip install -r requirements-${{ matrix.version }}.txt
+
+        - name: python opencv test
+          working-directory: installer\testcases\python
+          run: |
+            python .\opencv_test.py
+
+        - name: Download installer
+          run: |
+            $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+            # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+            powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }}
+
+        - name: python aravis test
+          working-directory: installer\testcases\python
+          run: |
+            $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
+            $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
+
+            python .\aravis_test.py
+
+        - name: python ionkit test
+          working-directory: installer\testcases\python
+          run: |
+            $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
+            $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
             
-  #           $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
-  #           Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
-  #           $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-
-  #           $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
-  #           $env:PATH="$env:PATH;$PATH"
-
-  #           $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
-  #           $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
-
-  #       - name: python aravis test
-  #         working-directory: installer\testcases\python
-  #         run: |
-  #           $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
-  #           $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
-
-  #           python .\aravis_test.py
-
-  #       - name: python ionkit test
-  #         working-directory: installer\testcases\python
-  #         run: |
-  #           $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
-  #           $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
-            
-  #           python .\ionkit_test.py
+            python .\ionkit_test.py
 
 
 
