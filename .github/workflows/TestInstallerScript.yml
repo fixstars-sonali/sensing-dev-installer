@@ -265,7 +265,10 @@ jobs:
           working-directory: installer\testcases\python
           run: |
             python .\opencv_test.py
-
+        - name: Create and enter build directory
+          run: |
+            mkdir build
+            cd build
         - name: Download installer for SDK
           working-directory: build
           run: |
