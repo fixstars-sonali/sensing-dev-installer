@@ -1,0 +1,33 @@
+name: Reusable SDK Installation Workflow
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      options:
+        required: false
+        type: string
+
+jobs:
+  install-sdk:
+    runs-on: windows-latest
+    steps:
+    - name: Create and enter build directory
+      run: |
+        mkdir build
+        cd build
+
+    - name: Download installer for SDK
+      working-directory: build
+      run: |
+        # $url = "https://github.com/${{ github.repository }}/releases/download/${{ inputs.version }}/installer.ps1"
+        $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+        Invoke-WebRequest $url -OutFile .\installer.ps1
+      shell: powershell
+
+    - name: Installation SDK
+      working-directory: build
+      run: |
+          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ inputs.version }} ${{ inputs.options }}
+      shell: powershell

@@ -161,24 +161,30 @@ jobs:
       INSTALL_PATH: "$env:LOCALAPPDATA"
       SDK_NAME : "sensing-dev"
       VERSION : ${{ matrix.version }}
-    steps:  
-      - name: Create and enter build directory
-        run: |
-          mkdir build
-          cd build
+    steps:
+      - name: Install sensing Dev SDK
+        uses: ./.github/workflows/install-sdk-workflow.yml@main
+        with:
+          version: '${{ env.VERSION }}'
+          options: '${{ matrix.options }}'
 
-      - name: Download installer
-        working-directory: build
-        run: |
-          $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
-          # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-          Invoke-WebRequest $url -OutFile .\installer.ps1
+      # - name: Create and enter build directory
+      #   run: |
+      #     mkdir build
+      #     cd build
 
-      - name: Installation 
-        working-directory: build
-        run: |
-          Write-Host "USERNAME = $env:USERNAME"
-          powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}   
+      # - name: Download installer
+      #   working-directory: build
+      #   run: |
+      #     $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+      #     # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+      #     Invoke-WebRequest $url -OutFile .\installer.ps1
+
+      # - name: Installation 
+      #   working-directory: build
+      #   run: |
+      #     Write-Host "USERNAME = $env:USERNAME"
+      #     powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}   
       
       - name: Checkout repository
         uses: actions/checkout@v4.1.1
@@ -228,6 +234,8 @@ jobs:
       strategy:
         matrix:
           version: ${{ fromJson(github.event.inputs.versions) }}
+          options: ${{ fromJson(github.event.inputs.options) }}
+
       env:
         INSTALL_PATH: "$env:LOCALAPPDATA"
         SDK_NAME : "sensing-dev"
@@ -254,18 +262,24 @@ jobs:
           run: |
             python .\opencv_test.py
 
-        - name: Download installer for SDK
-          working-directory: build
-          run: |
-            $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
-            # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
-            Invoke-WebRequest $url -OutFile .\installer.ps1
+        - name: Install sensing Dev SDK
+          uses: ./.github/workflows/install-sdk-workflow.yml@main
+          with:
+            version: '${{ env.VERSION }}'
+            options: '${{ matrix.options }}'
+
+        # - name: Download installer for SDK
+        #   working-directory: build
+        #   run: |
+        #     $url = "https://github.com/${{ github.repository }}/releases/download/${{ env.VERSION }}/installer.ps1"
+        #     # $url = "https://github.com/Sensing-Dev/sensing-dev-installer/releases/download/${{ env.VERSION }}/installer.ps1"
+        #     Invoke-WebRequest $url -OutFile .\installer.ps1
   
-        - name: Installation SDK
-          working-directory: build
-          run: |
-            Write-Host "USERNAME = $env:USERNAME"
-            powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}   
+        # - name: Installation SDK
+        #   working-directory: build
+        #   run: |
+        #     Write-Host "USERNAME = $env:USERNAME"
+        #     powershell.exe -ExecutionPolicy Bypass -File .\installer.ps1 -version ${{ env.VERSION }} ${{ matrix.options }}   
     
         - name: python aravis test
           working-directory: installer\testcases\python
