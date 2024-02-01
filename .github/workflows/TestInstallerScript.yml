@@ -163,7 +163,7 @@ jobs:
       VERSION : ${{ matrix.version }}
     steps:
       - name: Install sensing Dev SDK
-        uses: ./.github/workflows/install-sdk-workflow.yml@main
+        uses: ./.github/workflows/install-sdk-workflow.yml
         with:
           version: '${{ env.VERSION }}'
           options: '${{ matrix.options }}'
@@ -263,7 +263,7 @@ jobs:
             python .\opencv_test.py
 
         - name: Install sensing Dev SDK
-          uses: ./.github/workflows/install-sdk-workflow.yml@main
+          uses: ./.github/workflows/install-sdk-workflow.yml
           with:
             version: '${{ env.VERSION }}'
             options: '${{ matrix.options }}'
