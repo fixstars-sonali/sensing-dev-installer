@@ -265,7 +265,7 @@ function Set-InstallerEnvironment(){
       Write-Error "Script at $relativeScriptPath not found in the installation path!"
       exit 1
     }
-  }
+  } 
 }
 
 function Invoke-Script {
