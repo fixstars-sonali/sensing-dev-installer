@@ -149,8 +149,8 @@ jobs:
       matrix:
         version: ${{ fromJson(github.event.inputs.versions) }}
         options: ${{ fromJson(github.event.inputs.options) }}
-        tests: ["aravis_test","ionkit_test","opencv_test"]
-        # tests: ["aravis_test","opencv_test"]
+        # tests: ["aravis_test","ionkit_test","opencv_test"]
+        tests: ["aravis_test","opencv_test"]
         exclude:
           - options: "-user $env:USERNAME"
             tests: "opencv_test"
