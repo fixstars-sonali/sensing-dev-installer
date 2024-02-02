@@ -87,7 +87,7 @@ jobs:
         run: |
           
           # PowerShell code to construct and send the request
-          $scriptOptions = $env:SCRIPT_OPTIONS -replace '\$env:USERNAME', $env:USERNAME
+          # $scriptOptions = $env:SCRIPT_OPTIONS -replace '\$env:USERNAME', $env:USERNAME
           $jsonPayload = @{
             ref = "${{ github.ref }}"
             inputs = @{
