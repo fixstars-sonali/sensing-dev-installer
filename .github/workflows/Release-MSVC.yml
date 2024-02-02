@@ -95,11 +95,7 @@ jobs:
               options = $scriptOptions
             }
           } | ConvertTo-Json -Compress
-          Write-Host "github.ref : ${{ github.ref }}  "
-          Write-Host "github.ref_name : ${{ github.ref_name }}  "
-          Write-Host "scriptOptions : $scriptOptions  "
-          Write-Host "jsonPayload : $jsonPayload  "
-          Write-Host "github.context : ${{ github }}  "
+          
           Invoke-RestMethod `
           -Uri "https://api.github.com/repos/${{ github.repository }}/actions/workflows/Test-Release.yml/dispatches" `
           -Method Post `
