@@ -144,6 +144,7 @@ jobs:
 
   test-cpp:
     strategy:
+      fail-fast: false
       matrix:
         version: ${{ fromJson(github.event.inputs.versions) }}
         options: ${{ fromJson(github.event.inputs.options) }}
@@ -229,6 +230,7 @@ jobs:
 
   test-python:
       strategy:
+        fail-fast: false
         matrix:
           version: ${{ fromJson(github.event.inputs.versions) }}
           options: ${{ fromJson(github.event.inputs.options) }}
