@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ionkit-test)
+project(ionkit-test-old)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -10,8 +10,8 @@ include_directories(${SENSING_DEV_DIR}/include)
 link_directories(${SENSING_DEV_DIR}/bin)
 link_directories(${SENSING_DEV_DIR}/lib)
 
-set(TEST ionkit_test.cpp)
-add_executable(ionkit_test ${TEST})
-target_compile_features(ionkit_test PUBLIC cxx_std_17)
-target_link_libraries(ionkit_test PRIVATE ion-core.lib)
-target_link_libraries(ionkit_test PRIVATE Halide.dll)
+set(TEST ionkit_test_old.cpp)
+add_executable(ionkit_test_old ${TEST})
+target_compile_features(ionkit_test_old PUBLIC cxx_std_17)
+target_link_libraries(ionkit_test_old PRIVATE ion-core.lib)
+target_link_libraries(ionkit_test_old PRIVATE Halide.dll)
