@@ -79,6 +79,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  test:
+    needs: release  
+    uses:  ./.github/workflows/Test-Release.yml
+    with:
+      versions: ${{ github.ref_name }}
+      options: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
+
   test-installer-script-zip:   
     strategy:
       matrix:
