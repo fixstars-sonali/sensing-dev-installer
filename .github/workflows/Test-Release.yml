@@ -4,23 +4,10 @@ on:
     inputs:
       versions:
         description: 'List of versions to test'
-        # default: '["v24.01.01"]'
         default: '["v24.01.01","v23.11.01"]'
       options:
         description: 'List of script options to test'
         default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
-
-  workflow_call:
-    inputs:
-      versions:
-        description: 'List of versions to test'
-        # default: '["v24.01.01"]'
-        default: '["v24.01.01","v23.11.01"]'
-        type: string
-      options:
-        description: 'List of script options to test'
-        default: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
-        type: string
 
 env:
   PYTHON_VERSION: '3.11.4'
