@@ -83,6 +83,7 @@ jobs:
         shell: pwsh
         env:
           SCRIPT_OPTIONS: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
+          VERSION: '["${{ github.ref_name }}"]'
         run: |
           
           # PowerShell code to construct and send the request
@@ -90,7 +91,7 @@ jobs:
           $jsonPayload = @{
             ref = "${{ github.ref }}"
             inputs = @{
-              versions = "${{ github.ref_name }}"
+              versions = $env:VERSION
               options = $scriptOptions
             }
           } | ConvertTo-Json -Compress
