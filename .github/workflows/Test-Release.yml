@@ -1,5 +1,4 @@
-name: Test Sensing Dev release
-
+name: Multiple version test
 on:
   workflow_dispatch:
     inputs:
@@ -161,13 +160,18 @@ jobs:
       matrix:
         version: ${{ fromJson(github.event.inputs.versions) }}
         options: ${{ fromJson(github.event.inputs.options) }}
-        # tests: ["aravis_test","ionkit_test","opencv_test"]
-        tests: ["aravis_test","opencv_test"]
+        tests: ["aravis_test","ionkit_test","opencv_test"]
+        # tests: ["aravis_test","opencv_test"]
         exclude:
           - options: "-user $env:USERNAME"
             tests: "opencv_test"
           - options: ""
             tests: "opencv_test"
+          - version: "v23.11.01"
+            tests: "ionkit_test"
+        include:
+          - version: "v23.11.01"
+            tests: "ionkit_test_old"
     runs-on: windows-latest
     env:
       INSTALL_PATH: "$env:LOCALAPPDATA"
@@ -317,7 +321,7 @@ jobs:
             $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
             Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
             $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
-            
+
             $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
             $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
             
