@@ -84,6 +84,7 @@ jobs:
         env:
           SCRIPT_OPTIONS: '["-user $env:USERNAME", "-user $env:USERNAME -InstallOpenCV", "", "-InstallOpenCV"]'
         run: |
+          
           # PowerShell code to construct and send the request
           $scriptOptions = $env:SCRIPT_OPTIONS -replace '\$env:USERNAME', $env:USERNAME
           $jsonPayload = @{
@@ -93,7 +94,11 @@ jobs:
               options = $scriptOptions
             }
           } | ConvertTo-Json -Compress
-          
+          Write-Host "github.ref : ${{ github.ref }}  "
+          Write-Host "github.ref_name : ${{ github.ref_name }}  "
+          Write-Host "scriptOptions : $scriptOptions  "
+          Write-Host "jsonPayload : $jsonPayload  "
+          Write-Host "github.context : ${{ github }}  "
           curl -X POST `
                 -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" `
                 -H "Accept: application/vnd.github.v3+json" `
