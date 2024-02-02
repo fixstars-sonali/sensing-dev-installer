@@ -99,11 +99,15 @@ jobs:
           Write-Host "scriptOptions : $scriptOptions  "
           Write-Host "jsonPayload : $jsonPayload  "
           Write-Host "github.context : ${{ github }}  "
-          curl -X POST `
-                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" `
-                -H "Accept: application/vnd.github.v3+json" `
-                "https://api.github.com/repos/${{ github.repository }}/actions/workflows/Test-Release.yml/dispatches" `
-                -d $jsonPayload
-          
+          Invoke-RestMethod `
+          -Uri "https://api.github.com/repos/${{ github.repository }}/actions/workflows/Test-Release.yml/dispatches" `
+          -Method Post `
+          -Headers @{
+            "Authorization" = "token ${{ secrets.GITHUB_TOKEN }}"
+            "Accept" = "application/vnd.github.v3+json"
+          } `
+          -Body $jsonPayload `
+          -ContentType "application/json"
+            
 
 
