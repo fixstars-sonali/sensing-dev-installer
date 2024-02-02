@@ -285,6 +285,14 @@ jobs:
         - name: python aravis test
           working-directory: installer\testcases\python
           run: |
+            $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+            Write-Host PATH = $PATH        
+            $env:PATH="$env:PATH;$PATH"
+
+            $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+            Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+            $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
+
             $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
             Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
             $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
@@ -297,6 +305,18 @@ jobs:
         - name: python ionkit test
           working-directory: installer\testcases\python
           run: |
+            $PATH =  [Environment]::GetEnvironmentVariable("PATH", "User")
+            Write-Host PATH = $PATH        
+            $env:PATH="$env:PATH;$PATH"
+
+            $GST_PLUGIN_PATH =  [Environment]::GetEnvironmentVariable("GST_PLUGIN_PATH", "User")
+            Write-Host GST_PLUGIN_PATH = $GST_PLUGIN_PATH
+            $env:GST_PLUGIN_PATH=${GST_PLUGIN_PATH} 
+
+            $SENSING_DEV_ROOT= [Environment]::GetEnvironmentVariable("SENSING_DEV_ROOT", "User")
+            Write-Host SENSING_DEV_ROOT = $SENSING_DEV_ROOT
+            $env:SENSING_DEV_ROOT=${SENSING_DEV_ROOT}
+            
             $PYTHONPATH= [Environment]::GetEnvironmentVariable("PYTHONPATH", "User")
             $env:PYTHONPATH="$env:PYTHONPATH;$PYTHONPATH"
             
